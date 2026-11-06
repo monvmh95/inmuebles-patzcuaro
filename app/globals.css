@@ -395,3 +395,11 @@ html, body { overflow-x: clip; }
   .table .row { flex-wrap: wrap; }
 }
 @media (max-width: 720px) { .table .btn { white-space: nowrap; flex: 0 0 auto; } .table form.row[style*="nowrap"] input:not([type=hidden]) { flex: 1 1 auto !important; width: auto !important; } }
+
+/* Galería: las fotos no deben decidir el tamaño del carrusel (Safari de iPhone las estiraba al tamaño original) */
+.detail > * { min-width: 0; }
+.gallery-slider { max-width: 100%; }
+.gallery-track { position: relative; width: 100%; min-height: 0; }
+.gallery-slide { position: relative; width: 100%; min-width: 100%; height: 100%; overflow: hidden; }
+.gallery-slide img, .gallery-main img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: 100%; object-fit: cover; }
+.gallery-main { position: relative; }
