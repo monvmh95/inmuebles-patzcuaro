@@ -54,14 +54,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
   const sp = await searchParams;
   const op = first(sp.op), type = first(sp.type), colonia = first(sp.colonia), q = first(sp.q).slice(0, 60);
   const max = Number(first(sp.max)) || undefined;
+  const min = Number(first(sp.min)) || undefined;
   const lake = first(sp.lake) === "1";
-  const filtering = Boolean(op || type || colonia || q || max || lake);
+  const filtering = Boolean(op || type || colonia || q || max || min || lake);
 
   const [list, colonias, counts, king] = await Promise.all([
     safe(() => listProperties({
       operation: isOperation(op) ? (op as Operation) : undefined,
       type: (typeFromSlug(type) ?? (type in TYPES ? (type as PropType) : undefined)) || undefined,
       colonia_slug: colonia || undefined,
+      minPrice: min,
       maxPrice: max,
       q: q || undefined,
       lake: lake || undefined,
@@ -81,7 +83,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
           <span className="eyebrow">{t("Pueblo Mágico · Michoacán", "Pueblo Mágico · Michoacán, Mexico")}</span>
           <h1>{t("Tu próximo hogar en ", "Your next home in ")}<em>{CITY}</em>{t(", directo con el dueño", ", direct from the owner")}</h1>
           <p className="hero-lede">{t("Renta, venta, traspaso y hospedaje en Pátzcuaro. Contacta directo por WhatsApp, sin comisiones del sitio.", "Rentals, sales, business transfers and lodging in Pátzcuaro. Contact owners and hosts directly on WhatsApp, no site commission.")}</p>
-          <SearchBar op={op} type={type} colonia={colonia} max={max} lake={lake} colonias={colonias} />
+          <SearchBar op={op} type={type} colonia={colonia} max={max} min={min} lake={lake} colonias={colonias} />
           <div className="chips">
             <L className="chip" href="/renta/casas">{t("Casas en renta", "Houses for rent")}</L>
             <L className="chip" href="/hospedaje">{t("Hospedaje", "Lodging")}</L>

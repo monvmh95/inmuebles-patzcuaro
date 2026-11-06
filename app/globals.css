@@ -352,3 +352,20 @@ a.verified:hover { background: #eef6f3; color: var(--accent); }
 @media (max-width: 560px) { .navmenu { display: block; } .nav a.nav-fav { display: none; } .nav .lang-switch { display: none; } }
 @media (max-width: 400px) { .navmenu-btn-t { display: none; } }
 .steps-now { display: none; margin: 0 0 6px; } @media (max-width: 560px) { .steps-now { display: block; } }
+
+/* Filtro de precio "de – hasta" */
+.price-range { grid-column: 1 / -1; padding: 4px 2px 2px; }
+.price-range-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.price-range-label { font-weight: 650; font-size: .92rem; } .price-range-label small { font-weight: 400; color: var(--muted); }
+.price-range-val { font-weight: 700; color: var(--brand); font-size: .95rem; }
+.pr-track { position: relative; height: 34px; }
+.pr-track::before { content: ""; position: absolute; left: 0; right: 0; top: 15px; height: 4px; border-radius: 4px; background: var(--line); }
+.pr-fill { position: absolute; top: 15px; height: 4px; border-radius: 4px; background: var(--brand); }
+.pr-track input[type=range] { position: absolute; left: 0; top: 0; width: 100%; height: 34px; margin: 0; padding: 0; background: none; border: 0; -webkit-appearance: none; appearance: none; pointer-events: none; }
+.pr-track input[type=range]::-webkit-slider-runnable-track { background: none; height: 34px; }
+.pr-track input[type=range]::-moz-range-track { background: none; }
+.pr-track input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 26px; height: 26px; margin-top: 4px; border-radius: 50%; background: #fff; border: 3px solid var(--brand); box-shadow: 0 1px 4px rgba(0,0,0,.25); cursor: grab; }
+.pr-track input[type=range]::-moz-range-thumb { pointer-events: auto; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 3px solid var(--brand); box-shadow: 0 1px 4px rgba(0,0,0,.25); cursor: grab; }
+.pr-track input[type=range]:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--brand); outline-offset: 2px; }
+.price-hint { margin: 2px 0; }
+.pr-track input[type=range]:focus { outline: none; }
