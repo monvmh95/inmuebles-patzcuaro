@@ -41,6 +41,12 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ manageUrl: string } | null>(null);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
+  function movePhoto(from: number | null, to: number) {
+    if (from == null || from === to) return;
+    setPhotos((p) => { const a = [...p]; const [m] = a.splice(from, 1); a.splice(to, 0, m); return a; });
+  }
   const [landIn, setLandIn] = useState("");
   const [opSel, setOpSel] = useState<string>("renta");
   const [typeSel, setTypeSel] = useState<string>("casa");
@@ -278,13 +284,23 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
                 <li>{t("Fotos horizontales, sin filtros, de tu propiedad. Los anuncios con fotos ajenas se eliminan.", "Landscape photos, no filters, of your own property. Listings with someone else’s photos are removed.")}</li>
               </ul>
               <input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploading || photos.length >= MAX_PHOTOS} onChange={(e) => onFiles(e.target.files)} aria-label={t("Agregar fotos", "Add photos")} />
+              {photos.length > 1 && <p className="muted small" style={{ margin: "8px 0 0" }}>{t("Arrastra una foto para cambiar el orden. La primera es la principal. En el celular, toca ★ para hacerla principal.", "Drag a photo to reorder. The first one is the main photo. On a phone, tap ★ to make it the main one.")}</p>}
               {uploading && <p className="muted small" role="status">{t("Subiendo fotos…", "Uploading photos…")}</p>}
               <div className="thumbs">
                 {photos.map((u, idx) => (
-                  <div key={u} className="thumb">
+                  <div
+                    key={u}
+                    className={`thumb${dragIdx === idx ? " dragging" : ""}${overIdx === idx && dragIdx !== idx ? " over" : ""}`}
+                    draggable
+                    onDragStart={(e) => { setDragIdx(idx); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", String(idx)); }}
+                    onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overIdx !== idx) setOverIdx(idx); }}
+                    onDrop={(e) => { e.preventDefault(); movePhoto(dragIdx, idx); setDragIdx(null); setOverIdx(null); }}
+                    onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={u} alt={t(`Foto ${idx + 1}`, `Photo ${idx + 1}`)} />
+                    <img src={u} alt={t(`Foto ${idx + 1}`, `Photo ${idx + 1}`)} draggable={false} />
                     {idx === 0 && <span className="thumb-main">{t("Principal", "Main")}</span>}
+                    {idx > 0 && <button type="button" className="thumb-star" title={t("Hacer principal", "Make main")} aria-label={t(`Hacer principal la foto ${idx + 1}`, `Make photo ${idx + 1} the main one`)} onClick={() => movePhoto(idx, 0)}>★</button>}
                     <button type="button" aria-label={t(`Quitar foto ${idx + 1}`, `Remove photo ${idx + 1}`)} onClick={() => setPhotos((p) => p.filter((x) => x !== u))}>×</button>
                   </div>
                 ))}
@@ -296,7 +312,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         </fieldset>
         <fieldset>
           <legend>{t("Zona en el mapa (opcional)", "Area on the map (optional)")}</legend>
-          <LocationPicker value={geo} onChange={setGeo} />
+          {step === 1 && <LocationPicker value={geo} onChange={setGeo} />}
         </fieldset>
         <fieldset className="feats">
           <legend>{t("Características principales", "Main features")}</legend>

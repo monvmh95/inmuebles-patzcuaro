@@ -280,3 +280,8 @@ a.verified:hover { background: #eef6f3; color: var(--accent); }
 .form .feat:has(input:checked) { border-color: var(--brand); background: #fff; color: var(--brand-dark); font-weight: 650; }
 .prop-feats { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .prop-feats li { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: .88rem; }
+
+/* Fotos: arrastrar para reordenar */
+.thumb { cursor: grab; transition: transform .12s, opacity .12s; touch-action: manipulation; }
+.thumb.dragging { opacity: .4; } .thumb.over { outline: 3px solid var(--brand); outline-offset: 2px; border-radius: 8px; transform: scale(1.04); }
+.thumb .thumb-star { top: auto; right: 4px; bottom: 4px; width: 26px; height: 26px; background: rgba(255,255,255,.92); color: var(--brand); font-size: .95rem; box-shadow: 0 1px 4px rgba(0,0,0,.3); }

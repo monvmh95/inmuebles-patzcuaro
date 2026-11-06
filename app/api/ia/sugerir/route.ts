@@ -49,9 +49,15 @@ SEO Y GEO
 - Extensión de la descripción: entre 700 y 1400 caracteres.
 
 PREGUNTAS
-- "preguntas": hasta 4 preguntas cortas sobre datos importantes que faltan y que quien publica debería agregar (servicios, estado, depósito y duración del contrato en renta, escrituras y gravámenes en venta, uso de suelo en terreno, mascotas, distancia al centro).
+- Etiquetas <pregunta>: hasta 4 preguntas cortas sobre datos importantes que faltan y que quien publica debería agregar (servicios, estado, depósito y duración del contrato en renta, escrituras y gravámenes en venta, uso de suelo en terreno, mascotas, distancia al centro).
 
-Responde SOLO con JSON válido: {"titulo": string, "descripcion": string, "preguntas": string[]}`;
+FORMATO DE RESPUESTA (exacto, sin texto fuera de las etiquetas, sin markdown):
+<titulo>título</titulo>
+<descripcion>
+descripción con párrafos separados por una línea en blanco
+</descripcion>
+<pregunta>primera pregunta</pregunta>
+<pregunta>segunda pregunta</pregunta>`;
 
 const AUDIT = `Eres un auditor de hechos de anuncios inmobiliarios. Recibes <datos>, <caracteristicas>, <cerca_de>, <notas> (la única fuente de verdad, más las fotos adjuntas) y un <borrador> con título y descripción.
 Lista cada afirmación del borrador que NO esté respaldada por esa fuente (servicios, materiales, estado, distancias, adjetivos que implican hechos como "amplio" o "luminoso" si no constan o no se ven) y cualquier contenido prohibido: precio, teléfono, correo, enlace, emoji, urgencia falsa, promesa de inversión, preferencia por tipo de persona.
@@ -59,6 +65,17 @@ Lista cada afirmación del borrador que NO esté respaldada por esa fuente (serv
 Responde SOLO con JSON: {"ok": boolean, "problemas": string[]}. ok es true solo si no hay problemas.`;
 
 type Draft = { titulo?: string; descripcion?: string; preguntas?: string[] };
+
+function tag(s: string, name: string): string | undefined {
+  return s.match(new RegExp(`<${name}>([\\s\\S]*?)</${name}>`, "i"))?.[1]?.trim() || undefined;
+}
+function parseDraft(out: string): Draft | null {
+  const titulo = tag(out, "titulo"), descripcion = tag(out, "descripcion");
+  if (titulo && descripcion) {
+    return { titulo, descripcion, preguntas: [...out.matchAll(/<pregunta>([\s\S]*?)<\/pregunta>/gi)].map((m) => m[1].trim()).filter(Boolean) };
+  }
+  return parseJsonObject<Draft>(out); // por si el modelo respondió en JSON
+}
 
 function sanitize(text: string): string {
   return text
@@ -98,7 +115,9 @@ export async function POST(req: Request) {
   async function generate(fixes?: string[]): Promise<Draft | null> {
     const extra = fixes?.length ? `\n<correcciones>\nTu borrador anterior tuvo estos problemas; corrígelos sin añadir hechos nuevos:\n${fixes.map((f) => `- ${f}`).join("\n")}\n</correcciones>` : "";
     const out = await callClaude({ system: SYSTEM, content: [...photoBlocks, { type: "text", text: sourceText + extra }], maxTokens: 1100, timeoutMs: 25_000 });
-    return parseJsonObject<Draft>(out);
+    const draft = parseDraft(out);
+    if (!draft?.titulo || !draft?.descripcion) console.error("ia/sugerir: respuesta no interpretable:", out.slice(0, 600));
+    return draft;
   }
 
   try {

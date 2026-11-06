@@ -12,6 +12,7 @@ export default function LocationPicker({ value, onChange }: { value: Pt; onChang
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const layerRef = useRef<import("leaflet").Circle | null>(null);
   const libRef = useRef<typeof import("leaflet") | null>(null);
+  const roRef = useRef<ResizeObserver | null>(null);
   const [msg, setMsg] = useState("");
 
   function draw(p: Pt) {
@@ -32,8 +33,11 @@ export default function LocationPicker({ value, onChange }: { value: Pt; onChang
       libRef.current = L;
       const map = L.map(ref.current, { scrollWheelZoom: false }).setView(value ? [value.lat, value.lng] : MAP_CENTER, value ? 15 : 13);
       mapRef.current = map;
+      // Si el contenedor cambia de tamaño (paso que se muestra, rotar el celular), recalcula los mosaicos.
+      if (typeof ResizeObserver !== "undefined") { roRef.current = new ResizeObserver(() => map.invalidateSize()); roRef.current.observe(ref.current); }
+      setTimeout(() => map.invalidateSize(), 50);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 17,
+        maxZoom: 17, updateWhenIdle: false, keepBuffer: 3,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
       map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
@@ -44,7 +48,7 @@ export default function LocationPicker({ value, onChange }: { value: Pt; onChang
       });
       draw(value);
     })();
-    return () => { cancelled = true; mapRef.current?.remove(); mapRef.current = null; };
+    return () => { cancelled = true; roRef.current?.disconnect(); mapRef.current?.remove(); mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
