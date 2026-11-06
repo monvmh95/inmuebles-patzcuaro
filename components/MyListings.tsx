@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import PasskeyRegister from "./PasskeyRegister";
 
 export type MyItem = {
   slug: string; title: string; description: string; price: number | null; whatsapp: string; status: string; operation: string;
@@ -99,6 +100,7 @@ export default function MyListings({ items, email }: { items: MyItem[]; email: s
         <a className="btn btn-small" href="/publicar">Publicar otro</a>
       </div>
       <p className="muted small" style={{ margin: 0 }}>Sesión de <strong>{email}</strong> · este dispositivo te recuerda. <button type="button" className="linklike small" onClick={() => { if (confirm("Si sales, la próxima vez te pediremos un código por SMS. ¿Salir de este dispositivo?")) logout(); }}>Salir</button></p>
+      <PasskeyRegister />
       {items.length === 0 && <p className="muted">Todavía no tienes anuncios con este correo.</p>}
       {items.map((it) => <Card key={it.slug} it={it} />)}
     </div>

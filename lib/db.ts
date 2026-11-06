@@ -77,6 +77,17 @@ const SCHEMA = [
     last_used_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at   TIMESTAMPTZ NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS passkeys (
+    id           TEXT PRIMARY KEY,
+    email_norm   TEXT NOT NULL,
+    public_key   TEXT NOT NULL,
+    counter      BIGINT NOT NULL DEFAULT 0,
+    transports   TEXT,
+    label        TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_used_at TIMESTAMPTZ
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_passkeys_email ON passkeys (email_norm)`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS email_norm TEXT`,
   `CREATE INDEX IF NOT EXISTS idx_properties_email_norm ON properties (email_norm)`,
   `CREATE TABLE IF NOT EXISTS publishers (

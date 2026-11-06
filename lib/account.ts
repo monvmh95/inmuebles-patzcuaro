@@ -65,9 +65,21 @@ export async function startSession(emailRaw: string, kind: "email" | "sms" = "em
      ON CONFLICT (email_norm) DO UPDATE SET last_login_at = now() RETURNING email_norm, email, whatsapp, owner_kind`,
     [email_norm, kind === "sms" ? emailRaw : emailRaw.trim(), kind === "sms" ? emailRaw : null],
   );
+  await openSession(email_norm);
+  return acc[0];
+}
+
+async function openSession(email_norm: string): Promise<void> {
   const { token, hash } = newToken();
   await query(`INSERT INTO sessions (token_hash, email_norm, expires_at) VALUES ($1,$2, now() + ($3 || ' days')::interval)`, [hash, email_norm, String(SESSION_DAYS)]);
   (await cookies()).set(SESSION_COOKIE, token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * SESSION_DAYS });
+}
+
+/** Abre sesión para una cuenta que ya existe (entrada con llave de acceso). */
+export async function startSessionFor(email_norm: string): Promise<Account | null> {
+  const acc = await query<Account>(`UPDATE accounts SET last_login_at = now() WHERE email_norm = $1 RETURNING email_norm, email, whatsapp, owner_kind`, [email_norm]);
+  if (!acc[0]) return null;
+  await openSession(email_norm);
   return acc[0];
 }
 
