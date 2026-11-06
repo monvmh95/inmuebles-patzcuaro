@@ -1,8 +1,11 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PlaceholderArt } from "./Art";
+import { useLang } from "./LangProvider";
 
 export default function Gallery({ photos, title, label }: { photos: string[]; title: string; label: string }) {
+  const lang = useLang();
+  const en = lang === "en";
   const [i, setI] = useState(0);
   const dlg = useRef<HTMLDialogElement>(null);
   const startX = useRef<number | null>(null);
@@ -21,19 +24,19 @@ export default function Gallery({ photos, title, label }: { photos: string[]; ti
     return () => window.removeEventListener("keydown", h);
   }, [go]);
 
-  if (n === 0) return <div className="gallery-main"><PlaceholderArt label={label} /></div>;
+  if (n === 0) return <div className="gallery-main"><PlaceholderArt label={label} lang={lang} /></div>;
 
   return (
     <>
-      <button type="button" className="gallery-main gallery-open" onClick={() => open(0)} aria-label={`Ver fotos de ${title} en pantalla completa`}>
+      <button type="button" className="gallery-main gallery-open" onClick={() => open(0)} aria-label={en ? `View photos of ${title} full screen` : `Ver fotos de ${title} en pantalla completa`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photos[0]} alt={`${title}, foto 1 de ${n}`} width={1200} height={900} fetchPriority="high" />
-        {n > 1 && <span className="gallery-count">1 / {n} · Ver fotos</span>}
+        <img src={photos[0]} alt={en ? `${title}, photo 1 of ${n}` : `${title}, foto 1 de ${n}`} width={1200} height={900} fetchPriority="high" />
+        {n > 1 && <span className="gallery-count">1 / {n} · {en ? "View photos" : "Ver fotos"}</span>}
       </button>
       {n > 1 && (
         <div className="gallery-thumbs">
           {photos.slice(1).map((u, idx) => (
-            <button type="button" key={u} onClick={() => open(idx + 1)} aria-label={`Ver foto ${idx + 2} de ${n}`}>
+            <button type="button" key={u} onClick={() => open(idx + 1)} aria-label={en ? `View photo ${idx + 2} of ${n}` : `Ver foto ${idx + 2} de ${n}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={u} alt="" loading="lazy" width={300} height={225} />
             </button>
@@ -44,7 +47,7 @@ export default function Gallery({ photos, title, label }: { photos: string[]; ti
       <dialog
         ref={dlg}
         className="lightbox"
-        aria-label={`Fotos de ${title}`}
+        aria-label={en ? `Photos of ${title}` : `Fotos de ${title}`}
         onClick={(e) => { if (e.target === dlg.current) dlg.current?.close(); }}
         onTouchStart={(e) => { startX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
@@ -56,13 +59,13 @@ export default function Gallery({ photos, title, label }: { photos: string[]; ti
       >
         <div className="lightbox-inner">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photos[i]} alt={`${title}, foto ${i + 1} de ${n}`} />
+          <img src={photos[i]} alt={en ? `${title}, photo ${i + 1} of ${n}` : `${title}, foto ${i + 1} de ${n}`} />
           <p className="lightbox-count" aria-live="polite">{i + 1} / {n}</p>
-          <button type="button" className="lb-btn lb-close" onClick={() => dlg.current?.close()} aria-label="Cerrar">×</button>
+          <button type="button" className="lb-btn lb-close" onClick={() => dlg.current?.close()} aria-label={en ? "Close" : "Cerrar"}>×</button>
           {n > 1 && (
             <>
-              <button type="button" className="lb-btn lb-prev" onClick={() => go(-1)} aria-label="Foto anterior">‹</button>
-              <button type="button" className="lb-btn lb-next" onClick={() => go(1)} aria-label="Foto siguiente">›</button>
+              <button type="button" className="lb-btn lb-prev" onClick={() => go(-1)} aria-label={en ? "Previous photo" : "Foto anterior"}>‹</button>
+              <button type="button" className="lb-btn lb-next" onClick={() => go(1)} aria-label={en ? "Next photo" : "Foto siguiente"}>›</button>
             </>
           )}
         </div>

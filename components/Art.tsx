@@ -11,9 +11,9 @@ export function Logo({ size = 28 }: { size?: number }) {
 }
 
 /** Portada: tres portales frente al lago, con tejas y montañas. */
-export function PortalesHero() {
+export function PortalesHero({ lang = "es" }: { lang?: "es" | "en" }) {
   return (
-    <svg viewBox="0 0 400 480" role="img" aria-label="Ilustración de portales con tejas frente al lago y las montañas" preserveAspectRatio="xMidYMid slice" className="art-svg">
+    <svg viewBox="0 0 400 480" role="img" aria-label={lang === "en" ? "Illustration of tiled arcades in front of the lake and the mountains" : "Ilustración de portales con tejas frente al lago y las montañas"} preserveAspectRatio="xMidYMid slice" className="art-svg">
       <defs>
         <clipPath id="arch-clip"><path d="M0 480V200a200 200 0 0 1 400 0V480z" /></clipPath>
         <pattern id="tiles" width="26" height="16" patternUnits="userSpaceOnUse">
@@ -53,16 +53,17 @@ export function PortalesHero() {
 }
 
 /** Imagen de respaldo para anuncios sin foto. */
-export function PlaceholderArt({ label }: { label?: string }) {
+export function PlaceholderArt({ label, lang = "es" }: { label?: string; lang?: "es" | "en" }) {
+  const none = lang === "en" ? "No photo" : "Sin foto";
   return (
-    <div className="placeholder-art" role="img" aria-label={label ? `Sin foto: ${label}` : "Sin foto"}>
+    <div className="placeholder-art" role="img" aria-label={label ? `${none}: ${label}` : none}>
       <svg viewBox="0 0 200 150" aria-hidden="true" focusable="false" preserveAspectRatio="xMidYMid slice">
         <rect width="200" height="150" fill="#efe3cc" />
         <path d="M0 96 50 62l40 30 46-40 64 46v56H0z" fill="#d9c7a3" />
         <path d="M60 150v-34a22 22 0 0 1 44 0v34z" fill="#b97a5f" opacity=".55" />
         <path d="M40 78 82 52l42 26z" fill="#a8452c" opacity=".6" />
       </svg>
-      <span>{label ?? "Sin foto"}</span>
+      <span>{label ?? none}</span>
     </div>
   );
 }

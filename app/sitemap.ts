@@ -3,10 +3,26 @@ import { OPERATIONS, SITE_URL, TYPES, type Operation, type PropType } from "@/li
 import { hasDb } from "@/lib/db";
 import { listAllSlugs, listLandingCombos } from "@/lib/properties";
 import { listColoniaSlugsWithContent } from "@/lib/colonias";
+import { localizePath } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
+/** Cada URL se publica en español e inglés, con hreflang cruzado. */
+function dual(entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap {
+  return entries.flatMap((e) => {
+    const path = e.url.replace(SITE_URL, "") || "/";
+    const es = `${SITE_URL}${path}`;
+    const en = `${SITE_URL}${localizePath("en", path)}`;
+    const alternates = { languages: { "es-MX": es, en } };
+    return [{ ...e, url: es, alternates }, { ...e, url: en, alternates }];
+  });
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  return dual(await build());
+}
+
+async function build(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const out: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "daily", priority: 1 },

@@ -2,8 +2,10 @@
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 import { GEO_GRID } from "@/lib/config";
+import { useT } from "./LangProvider";
 
 export default function ZoneMap({ lat, lng }: { lat: number; lng: number }) {
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let map: import("leaflet").Map | null = null;
@@ -20,5 +22,5 @@ export default function ZoneMap({ lat, lng }: { lat: number; lng: number }) {
     })();
     return () => { cancelled = true; map?.remove(); };
   }, [lat, lng]);
-  return <div ref={ref} className="map map-sm" role="img" aria-label="Zona aproximada de la propiedad" />;
+  return <div ref={ref} className="map map-sm" role="img" aria-label={t("Zona aproximada de la propiedad", "Approximate area of the property")} />;
 }

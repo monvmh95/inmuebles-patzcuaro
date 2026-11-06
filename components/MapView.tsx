@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
-import { GEO_GRID, MAP_CENTER, OPERATIONS, TYPES } from "@/lib/config";
+import { GEO_GRID, MAP_CENTER } from "@/lib/config";
+import { localizePath, opLabel, typeLabel } from "@/lib/i18n";
+import { useLang } from "./LangProvider";
 import { formatPrice, shortPrice } from "@/lib/format";
 import type { MapPoint } from "@/lib/properties";
 
 export default function MapView({ points }: { points: MapPoint[] }) {
+  const lang = useLang();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,7 +32,7 @@ export default function MapView({ points }: { points: MapPoint[] }) {
         const lng = p.lng + ((((h >> 7) % 100) / 100) - 0.5) * GEO_GRID * 0.6;
         const icon = L.divIcon({
           className: "",
-          html: `<span class="map-pin map-pin-${p.operation}">${shortPrice(p.price)}</span>`,
+          html: `<span class="map-pin map-pin-${p.operation}">${shortPrice(p.price, lang)}</span>`,
           iconSize: [0, 0],
         });
         const m = L.marker([lat, lng], { icon, title: p.title }).addTo(map);
@@ -41,12 +44,12 @@ export default function MapView({ points }: { points: MapPoint[] }) {
           box.appendChild(img);
         }
         const a = document.createElement("a");
-        a.href = `/propiedad/${p.slug}`;
+        a.href = localizePath(lang, `/propiedad/${p.slug}`);
         a.textContent = p.title;
         const price = document.createElement("strong");
-        price.textContent = formatPrice(p.price, p.operation);
+        price.textContent = formatPrice(p.price, p.operation, lang);
         const meta = document.createElement("span");
-        meta.textContent = `${TYPES[p.type].label} · ${OPERATIONS[p.operation].label} · ${p.colonia}`;
+        meta.textContent = `${typeLabel(lang, p.type)} · ${opLabel(lang, p.operation)} · ${p.colonia}`;
         box.append(price, a, meta);
         m.bindPopup(box, { minWidth: 200 });
         bounds.push([lat, lng]);
@@ -55,7 +58,7 @@ export default function MapView({ points }: { points: MapPoint[] }) {
       else if (bounds.length === 1) map.setView(bounds[0], 15);
     })();
     return () => { cancelled = true; map?.remove(); };
-  }, [points]);
+  }, [points, lang]);
 
-  return <div ref={ref} className="map" role="region" aria-label="Mapa de propiedades (zonas aproximadas)" />;
+  return <div ref={ref} className="map" role="region" aria-label={lang === "en" ? "Map of properties (approximate areas)" : "Mapa de propiedades (zonas aproximadas)"} />;
 }

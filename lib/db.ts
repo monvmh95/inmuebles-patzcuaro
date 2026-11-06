@@ -84,6 +84,19 @@ const SCHEMA = [
     source      TEXT NOT NULL DEFAULT 'payment',
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
   )`,
+  `CREATE TABLE IF NOT EXISTS ai_log (
+    id         BIGSERIAL PRIMARY KEY,
+    ip_hash    TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_ai_log_ip ON ai_log (ip_hash, created_at)`,
+  `CREATE TABLE IF NOT EXISTS translations (
+    hash       TEXT NOT NULL,
+    lang       TEXT NOT NULL,
+    text       TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (hash, lang)
+  )`,
   `CREATE INDEX IF NOT EXISTS idx_king_slots_time ON king_slots (starts_at, ends_at)`,
 ];
 

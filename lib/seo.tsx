@@ -1,22 +1,25 @@
 import { CITY, OPERATIONS, SITE_NAME, SITE_URL, STATE, TYPES } from "./config";
 import type { Property } from "./properties";
+import { localizePath, opPlural, typeLabel, type Lang } from "./i18n";
 
-export function propertyTitle(p: Pick<Property, "type" | "operation" | "colonia">) {
-  return `${TYPES[p.type].label} ${OPERATIONS[p.operation].plural} en ${p.colonia}, ${CITY}`;
+export function propertyTitle(p: Pick<Property, "type" | "operation" | "colonia">, lang: Lang = "es") {
+  return lang === "en"
+    ? `${typeLabel(lang, p.type)} ${opPlural(lang, p.operation)} in ${p.colonia}, ${CITY}`
+    : `${TYPES[p.type].label} ${OPERATIONS[p.operation].plural} en ${p.colonia}, ${CITY}`;
 }
 
-export function propertyJsonLd(p: Property) {
-  const url = `${SITE_URL}/propiedad/${p.slug}`;
+export function propertyJsonLd(p: Property, lang: Lang = "es", text?: { title: string; description: string }) {
+  const url = `${SITE_URL}${localizePath(lang, `/propiedad/${p.slug}`)}`;
   const isRent = p.operation === "renta";
   return {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
-    name: p.title,
-    description: p.description.slice(0, 500),
+    name: text?.title ?? p.title,
+    description: (text?.description ?? p.description).slice(0, 500),
     url,
     datePosted: new Date(p.approved_at ?? p.created_at).toISOString(),
     image: p.photos,
-    inLanguage: "es-MX",
+    inLanguage: lang === "en" ? "en" : "es-MX",
     about: {
       "@type": p.type === "terreno" ? "Landform" : p.type === "departamento" ? "Apartment" : p.type === "local" ? "Store" : "House",
       address: { "@type": "PostalAddress", addressLocality: CITY, addressRegion: STATE, addressCountry: "MX", streetAddress: p.colonia },
@@ -39,31 +42,35 @@ export function propertyJsonLd(p: Property) {
   };
 }
 
-export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
+export function breadcrumbJsonLd(items: { name: string; path: string }[], lang: Lang = "es") {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: items.map((it, i) => ({ "@type": "ListItem", position: i + 1, name: it.name, item: `${SITE_URL}${it.path}` })),
+    itemListElement: items.map((it, i) => ({ "@type": "ListItem", position: i + 1, name: it.name, item: `${SITE_URL}${localizePath(lang, it.path)}` })),
   };
 }
 
-export function itemListJsonLd(name: string, props: Property[]) {
+export function itemListJsonLd(name: string, props: Pick<Property, "slug" | "title">[], lang: Lang = "es") {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name,
-    itemListElement: props.map((p, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE_URL}/propiedad/${p.slug}`, name: p.title })),
+    itemListElement: props.map((p, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE_URL}${localizePath(lang, `/propiedad/${p.slug}`)}`, name: p.title })),
   };
 }
 
-export const websiteJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: SITE_NAME,
-  url: SITE_URL,
-  inLanguage: "es-MX",
-  description: `Casas, departamentos, terrenos y locales en renta, venta y traspaso en ${CITY}, ${STATE}.`,
-};
+export function websiteJsonLd(lang: Lang = "es") {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    url: lang === "en" ? `${SITE_URL}/en` : SITE_URL,
+    inLanguage: lang === "en" ? "en" : "es-MX",
+    description: lang === "en"
+      ? `Houses, apartments, land and commercial space for rent, sale and transfer in ${CITY}, ${STATE}, Mexico.`
+      : `Casas, departamentos, terrenos y locales en renta, venta y traspaso en ${CITY}, ${STATE}.`,
+  };
+}
 
 export function JsonLd({ data }: { data: unknown }) {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;

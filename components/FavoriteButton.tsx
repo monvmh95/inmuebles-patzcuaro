@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { readFavs, toggleFav } from "@/lib/favs";
+import { useT } from "./LangProvider";
 
 export default function FavoriteButton({ slug, className = "" }: { slug: string; className?: string }) {
+  const t = useT();
   const [on, setOn] = useState(false);
   useEffect(() => {
     setOn(readFavs().includes(slug));
@@ -15,7 +17,7 @@ export default function FavoriteButton({ slug, className = "" }: { slug: string;
       type="button"
       className={`fav${on ? " fav-on" : ""} ${className}`}
       aria-pressed={on}
-      aria-label={on ? "Quitar de favoritos" : "Guardar en favoritos"}
+      aria-label={on ? t("Quitar de favoritos", "Remove from favorites") : t("Guardar en favoritos", "Save to favorites")}
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOn(toggleFav(slug)); }}
     >
       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">

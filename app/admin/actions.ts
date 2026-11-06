@@ -1,5 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { prewarmTranslations } from "@/lib/ai";
 import { redirect } from "next/navigation";
 import { checkPassword, clearAdminCookie, isAdmin, setAdminCookie } from "@/lib/admin";
 import { query } from "@/lib/db";
@@ -31,7 +33,13 @@ export async function logout() {
 }
 export async function approve(fd: FormData) {
   await guard();
-  await query(`UPDATE properties SET status='approved', approved_at=now(), confirmed_at=now() WHERE id=$1`, [id(fd)]);
+  const pid = id(fd);
+  await query(`UPDATE properties SET status='approved', approved_at=now(), confirmed_at=now() WHERE id=$1`, [pid]);
+  // Deja lista la traducción al inglés (si hay IA configurada) sin hacer esperar al moderador.
+  after(async () => {
+    const r = await query<{ title: string; description: string }>(`SELECT title, description FROM properties WHERE id=$1`, [pid]).catch(() => []);
+    if (r[0]) await prewarmTranslations(r[0].title, r[0].description).catch(() => {});
+  });
   refresh();
 }
 export async function reject(fd: FormData) {

@@ -2,10 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import { GEO_GRID, MAP_CENTER, inBounds } from "@/lib/config";
+import { useT } from "./LangProvider";
 
 type Pt = { lat: number; lng: number } | null;
 
 export default function LocationPicker({ value, onChange }: { value: Pt; onChange: (p: Pt) => void }) {
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const layerRef = useRef<import("leaflet").Circle | null>(null);
@@ -35,7 +37,7 @@ export default function LocationPicker({ value, onChange }: { value: Pt; onChang
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
       map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
-        if (!inBounds(e.latlng.lat, e.latlng.lng)) { setMsg("Esa zona queda fuera de Pátzcuaro y sus alrededores."); return; }
+        if (!inBounds(e.latlng.lat, e.latlng.lng)) { setMsg(t("Esa zona queda fuera de Pátzcuaro y sus alrededores.", "That area is outside Pátzcuaro and its surroundings.")); return; }
         setMsg("");
         const p = { lat: e.latlng.lat, lng: e.latlng.lng };
         draw(p); onChange(p);
@@ -48,27 +50,27 @@ export default function LocationPicker({ value, onChange }: { value: Pt; onChang
 
   function useMyLocation() {
     setMsg("");
-    if (!navigator.geolocation) return setMsg("Tu navegador no permite usar la ubicación.");
+    if (!navigator.geolocation) return setMsg(t("Tu navegador no permite usar la ubicación.", "Your browser does not allow location access."));
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        if (!inBounds(p.lat, p.lng)) return setMsg("Tu ubicación actual no está en Pátzcuaro. Toca el mapa para marcar la zona.");
+        if (!inBounds(p.lat, p.lng)) return setMsg(t("Tu ubicación actual no está en Pátzcuaro. Toca el mapa para marcar la zona.", "Your current location is not in Pátzcuaro. Tap the map to mark the area."));
         mapRef.current?.setView([p.lat, p.lng], 15); draw(p); onChange(p);
       },
-      () => setMsg("No pudimos obtener tu ubicación. Toca el mapa para marcar la zona."),
+      () => setMsg(t("No pudimos obtener tu ubicación. Toca el mapa para marcar la zona.", "We could not get your location. Tap the map to mark the area.")),
       { enableHighAccuracy: false, timeout: 8000 },
     );
   }
 
   return (
     <div className="stack">
-      <div ref={ref} className="map map-pick" role="application" aria-label="Mapa para marcar la zona aproximada" />
+      <div ref={ref} className="map map-pick" role="application" aria-label={t("Mapa para marcar la zona aproximada", "Map to mark the approximate area")} />
       <div className="row">
-        <button type="button" className="btn btn-small btn-ghost" onClick={useMyLocation}>Usar mi ubicación</button>
-        {value && <button type="button" className="btn btn-small btn-ghost" onClick={() => { draw(null); onChange(null); }}>Quitar zona</button>}
+        <button type="button" className="btn btn-small btn-ghost" onClick={useMyLocation}>{t("Usar mi ubicación", "Use my location")}</button>
+        {value && <button type="button" className="btn btn-small btn-ghost" onClick={() => { draw(null); onChange(null); }}>{t("Quitar zona", "Remove area")}</button>}
       </div>
       <p className="muted small" role="status">
-        {msg || (value ? "Zona marcada. En el anuncio se muestra un área de unos 300 m, nunca tu dirección exacta." : "Toca el mapa para marcar la zona. Es opcional, pero tu anuncio aparecerá en el mapa.")}
+        {msg || (value ? t("Zona marcada. En el anuncio se muestra un área de unos 300 m, nunca tu dirección exacta.", "Area marked. The listing shows an area of about 300 m, never your exact address.") : t("Toca el mapa para marcar la zona. Es opcional, pero tu anuncio aparecerá en el mapa.", "Tap the map to mark the area. It is optional, but your listing will appear on the map."))}
       </p>
     </div>
   );

@@ -63,7 +63,7 @@ img { max-width: 100%; display: block; }
 .nav { display: flex; gap: 16px; align-items: center; font-size: .95rem; }
 .nav a:not(.btn) { color: var(--ink); text-decoration: none; padding: 6px 2px; }
 .nav a:not(.btn):hover { color: var(--brand); text-decoration: underline; }
-@media (max-width: 560px) { .nav .nav-sec { display: none; } .nav-fav-t { display: none; } .nav { gap: 10px; } .logo { font-size: 1.02rem; } .nav .btn { white-space: nowrap; padding: 8px 12px; } }
+@media (max-width: 560px) { .nav .nav-sec { display: none; } .nav-fav-t { display: none; } .nav { gap: 10px; } .logo { font-size: 1.02rem; } .nav .btn { white-space: nowrap; padding: 8px 10px; font-size: .82rem; } .nav { gap: 7px; } .logo { font-size: .95rem; gap: 5px; } .lang-switch { padding: 4px 8px; } }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; background: var(--brand); color: #fff; border: 2px solid transparent; border-radius: 999px; padding: 11px 22px; font: 650 .95rem/1.1 inherit; text-decoration: none; transition: background .15s, transform .05s; }
 .btn:hover { background: var(--brand-dark); color: #fff; }
@@ -259,3 +259,10 @@ a.verified:hover { background: #eef6f3; color: var(--accent); }
 .view-toggle a[aria-current=page] { background: var(--brand); color: #fff; }
 .fav-inline { flex: none; border: 1px solid var(--line); }
 
+
+/* Asistente de redacción y selector de idioma */
+.ai-box { border: 1px dashed var(--line); border-radius: 12px; padding: 12px; background: var(--surface); }
+.ai-sugg { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.lang-switch { font-size: .8rem; font-weight: 700; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; text-decoration: none !important; color: var(--ink) !important; background: var(--surface); }
+.lang-switch:hover { border-color: var(--brand); color: var(--brand) !important; }
+@media (max-width: 400px) { .logo { font-size: .84rem; gap: 4px; } .logo svg { width: 22px; height: 22px; } .header-row { gap: 6px; } .nav { gap: 5px; } .nav .btn { padding: 7px 9px; font-size: .78rem; } }

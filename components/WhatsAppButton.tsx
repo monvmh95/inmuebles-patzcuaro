@@ -1,6 +1,8 @@
 "use client";
+import { useT } from "./LangProvider";
 
-export default function WhatsAppButton({ slug, href, label = "Escribir por WhatsApp" }: { slug: string; href: string; label?: string }) {
+export default function WhatsAppButton({ slug, href, label }: { slug: string; href: string; label?: string }) {
+  const t = useT();
   function track() {
     try {
       const data = JSON.stringify({ slug });
@@ -10,7 +12,7 @@ export default function WhatsAppButton({ slug, href, label = "Escribir por Whats
   }
   return (
     <a className="btn btn-wa" href={href} target="_blank" rel="noopener noreferrer nofollow" onClick={track}>
-      {label}
+      {label ?? t("Escribir por WhatsApp", "Message on WhatsApp")}
     </a>
   );
 }

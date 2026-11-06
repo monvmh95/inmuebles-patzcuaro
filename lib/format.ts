@@ -1,18 +1,30 @@
 // Funciones puras, seguras para usar también en el navegador (sin módulos de Node).
 
-export function formatPrice(price: number | null, operation: string): string {
+export function formatPrice(price: number | null, operation: string, lang: "es" | "en" = "es"): string {
+  if (lang === "en") {
+    if (price == null) return "Price negotiable";
+    const n = `$${new Intl.NumberFormat("en-US").format(price)} MXN`;
+    return operation === "renta" ? `${n} /month` : n;
+  }
   if (price == null) return "Precio a tratar";
   const n = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(price);
   return operation === "renta" ? `${n} /mes` : n;
 }
 
-export function formatDate(d: Date | string): string {
-  return new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "America/Mexico_City" }).format(new Date(d));
+export function formatDate(d: Date | string, lang: "es" | "en" = "es"): string {
+  return new Intl.DateTimeFormat(lang === "en" ? "en-US" : "es-MX", { dateStyle: "medium", timeZone: "America/Mexico_City" }).format(new Date(d));
 }
 
 /** "hoy", "ayer", "hace 3 días", "hace 2 semanas", "hace 4 meses". */
-export function timeAgo(d: Date | string, now: Date = new Date()): string {
+export function timeAgo(d: Date | string, now: Date = new Date(), lang: "es" | "en" = "es"): string {
   const days = Math.max(0, Math.floor((now.getTime() - new Date(d).getTime()) / 86_400_000));
+  if (lang === "en") {
+    if (days === 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 14) return `${days} days ago`;
+    if (days < 60) return `${Math.floor(days / 7)} weeks ago`;
+    return `${Math.floor(days / 30)} months ago`;
+  }
   if (days === 0) return "hoy";
   if (days === 1) return "ayer";
   if (days < 14) return `hace ${days} días`;
@@ -29,8 +41,8 @@ export function pricePerM2(p: { price: number | null; operation: string; type: s
 }
 
 /** Precio corto para pines de mapa: $6.5k, $1.2M. */
-export function shortPrice(price: number | null): string {
-  if (price == null) return "Tratar";
+export function shortPrice(price: number | null, lang: "es" | "en" = "es"): string {
+  if (price == null) return lang === "en" ? "Ask" : "Tratar";
   if (price >= 1_000_000) return `$${(price / 1_000_000).toFixed(price % 1_000_000 === 0 ? 0 : 1)}M`;
   if (price >= 1_000) return `$${(price / 1_000).toFixed(price % 1_000 === 0 ? 0 : 1)}k`;
   return `$${price}`;

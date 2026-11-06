@@ -1,10 +1,15 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { OPERATIONS, TYPES } from "@/lib/config";
+import { OPERATIONS, TYPES, type Operation, type PropType } from "@/lib/config";
+import { opLabel, typePlural } from "@/lib/i18n";
+import { useLang, useHref } from "./LangProvider";
 
 type Props = { op: string; type: string; colonia: string; max?: number; lake?: boolean; colonias: { colonia: string; colonia_slug: string }[] };
 
 export default function SearchBar({ op, type, colonia, max, lake, colonias }: Props) {
+  const lang = useLang();
+  const en = lang === "en";
+  const href = useHref();
   const formRef = useRef<HTMLFormElement>(null);
   const [more, setMore] = useState(Boolean(colonia || max));
   const empty = !op && !type && !colonia && !max && !lake;
@@ -32,10 +37,10 @@ export default function SearchBar({ op, type, colonia, max, lake, colonias }: Pr
     } catch {}
   }
 
-  const ops: [string, string][] = [["", "Todo"], ...Object.entries(OPERATIONS).map(([k, v]) => [k, v.label] as [string, string])];
+  const ops: [string, string][] = [["", en ? "All" : "Todo"], ...(Object.keys(OPERATIONS) as Operation[]).map((k) => [k, opLabel(lang, k)] as [string, string])];
   return (
-    <form ref={formRef} onSubmit={remember} className="search" action="/" method="get" role="search" aria-label="Buscar propiedades">
-      <fieldset className="seg" aria-label="Operación">
+    <form ref={formRef} onSubmit={remember} className="search" action={href("/")} method="get" role="search" aria-label={en ? "Search properties" : "Buscar propiedades"}>
+      <fieldset className="seg" aria-label={en ? "Operation" : "Operación"}>
         {ops.map(([v, l]) => (
           <label key={v || "all"} className="seg-opt">
             <input type="radio" name="op" value={v} defaultChecked={op === v} />
@@ -44,22 +49,22 @@ export default function SearchBar({ op, type, colonia, max, lake, colonias }: Pr
         ))}
       </fieldset>
       <div className="search-row">
-        <select name="type" defaultValue={type} aria-label="Tipo de inmueble">
-          <option value="">Todo tipo</option>
-          {Object.entries(TYPES).map(([k, v]) => <option key={k} value={k}>{v.plural}</option>)}
+        <select name="type" defaultValue={type} aria-label={en ? "Property type" : "Tipo de inmueble"}>
+          <option value="">{en ? "Any type" : "Todo tipo"}</option>
+          {(Object.keys(TYPES) as PropType[]).map((k) => <option key={k} value={k}>{typePlural(lang, k)}</option>)}
         </select>
         <div className={`search-extra${more ? " open" : ""}`}>
-          <select name="colonia" defaultValue={colonia} aria-label="Colonia">
-            <option value="">Toda la ciudad</option>
+          <select name="colonia" defaultValue={colonia} aria-label={en ? "Neighborhood" : "Colonia"}>
+            <option value="">{en ? "Whole city" : "Toda la ciudad"}</option>
             {colonias.map((c) => <option key={c.colonia_slug} value={c.colonia_slug}>{c.colonia}</option>)}
           </select>
-          <input name="max" type="number" min={0} inputMode="numeric" placeholder="Precio máx. $" defaultValue={max} aria-label="Precio máximo en pesos" />
+          <input name="max" type="number" min={0} inputMode="numeric" placeholder={en ? "Max price (MXN) $" : "Precio máx. $"} defaultValue={max} aria-label={en ? "Maximum price in pesos" : "Precio máximo en pesos"} />
         </div>
-        <label className="check small lake-check"><input type="checkbox" name="lake" value="1" defaultChecked={lake} /> Con vista al lago</label>
+        <label className="check small lake-check"><input type="checkbox" name="lake" value="1" defaultChecked={lake} /> {en ? "Lake view" : "Con vista al lago"}</label>
         <button type="button" className="linklike search-toggle" aria-expanded={more} onClick={() => setMore((v) => !v)}>
-          {more ? "Menos filtros" : "Más filtros"}
+          {more ? (en ? "Fewer filters" : "Menos filtros") : (en ? "More filters" : "Más filtros")}
         </button>
-        <button className="btn">Buscar</button>
+        <button className="btn">{en ? "Search" : "Buscar"}</button>
       </div>
     </form>
   );

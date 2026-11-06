@@ -28,6 +28,9 @@ export function GET() {
 - /propiedad/<slug>: ficha individual.
 - /colonias/<colonia>: página de cada colonia con texto editorial y anuncios.
 
+## English
+- English version of every page lives under ${SITE_URL}/en (for example ${SITE_URL}/en/rent/houses and ${SITE_URL}/en/guides). Listings are written in Spanish by owners and shown in English with an automatic translation.
+
 ## Notas
 - Los precios están en pesos mexicanos (MXN). Las rentas son mensuales salvo que el anuncio indique otra cosa.
 - Los anuncios se revisan manualmente y caducan a los 90 días si el dueño no confirma que siguen disponibles.
