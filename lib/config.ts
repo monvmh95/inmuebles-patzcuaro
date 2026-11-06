@@ -3,6 +3,8 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3
 export const CITY = "Pátzcuaro";
 export const STATE = "Michoacán";
 export const KING_ENABLED = process.env.ENABLE_KING === "true";
+/** Anuncios activos (por revisar + publicados) que una persona puede tener gratis. Se identifica por su WhatsApp. */
+export const FREE_LISTING_LIMIT = Math.max(1, Math.floor(Number(process.env.FREE_LISTING_LIMIT ?? 40)) || 40);
 export const KING_PRICE_MXN = 20;
 export const KING_HOURS = 24;
 export const MAX_PHOTOS = 8;

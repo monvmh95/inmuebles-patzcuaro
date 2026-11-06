@@ -50,6 +50,22 @@ export async function setPrice(fd: FormData) {
   await query(`UPDATE properties SET price=$2 WHERE id=$1`, [id(fd), price]);
   refresh();
 }
+export async function savePublisher(fd: FormData) {
+  await guard();
+  const wa = String(fd.get("whatsapp") ?? "").replace(/\D/g, "");
+  if (wa.length !== 10) throw new Error("whatsapp inválido");
+  const rawLimit = String(fd.get("limit") ?? "").trim();
+  const limit = rawLimit === "" ? null : Number(rawLimit);
+  if (limit != null && (!Number.isInteger(limit) || limit < 0 || limit > 100_000)) throw new Error("límite inválido");
+  const note = String(fd.get("note") ?? "").trim().slice(0, 300) || null;
+  const blocked = fd.get("blocked") === "on";
+  await query(
+    `INSERT INTO publishers (whatsapp, listing_limit, blocked, note, updated_at) VALUES ($1,$2,$3,$4,now())
+     ON CONFLICT (whatsapp) DO UPDATE SET listing_limit=$2, blocked=$3, note=$4, updated_at=now()`,
+    [wa, limit, blocked, note],
+  );
+  refresh();
+}
 export async function reject(fd: FormData) {
   await guard();
   await query(`UPDATE properties SET status='rejected' WHERE id=$1`, [id(fd)]);

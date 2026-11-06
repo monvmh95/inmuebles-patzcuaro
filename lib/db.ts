@@ -50,6 +50,13 @@ const SCHEMA = [
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lake_view BOOLEAN NOT NULL DEFAULT false`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS land_dims TEXT`,
+  `CREATE TABLE IF NOT EXISTS publishers (
+    whatsapp      TEXT PRIMARY KEY,
+    listing_limit INTEGER,
+    blocked       BOOLEAN NOT NULL DEFAULT false,
+    note          TEXT,
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS features JSONB NOT NULL DEFAULT '[]'::jsonb`,
   `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check`,
   `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check2`,

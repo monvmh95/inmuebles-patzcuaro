@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { adminConfigured, isAdmin } from "@/lib/admin";
 import { hasDb, query } from "@/lib/db";
-import { KING_ENABLED, OPERATIONS, TYPES } from "@/lib/config";
+import { FREE_LISTING_LIMIT, KING_ENABLED, OPERATIONS, TYPES } from "@/lib/config";
+import { listPublishers, limitFor } from "@/lib/publishers";
 import { formatDate, formatPrice } from "@/lib/util";
 import { saveColonia } from "./actions";
 import { listColoniaContent } from "@/lib/colonias";
-import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport, setPrice } from "./actions";
+import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport, setPrice, savePublisher } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Administración", robots: { index: false, follow: false } };
@@ -39,7 +40,7 @@ export default async function Admin() {
     return <div className="notice"><h1>Administración</h1><p>Conecta la base de datos (Neon) para empezar a moderar.</p><form action={logout}><button className="btn btn-small">Salir</button></form></div>;
   }
 
-  const [pending, approved, reports, stats, slots, colContent, colList] = await Promise.all([
+  const [pending, approved, reports, stats, slots, colContent, colList, people] = await Promise.all([
     query<Row>(`SELECT * FROM properties WHERE status='pending' ORDER BY id ASC LIMIT 50`),
     query<Row>(`SELECT * FROM properties WHERE status='approved' ORDER BY approved_at DESC NULLS LAST LIMIT 40`),
     query<{ id: number; reason: string; created_at: string; slug: string; title: string }>(
@@ -50,7 +51,9 @@ export default async function Admin() {
       `SELECT p.title, k.starts_at, k.ends_at, k.source FROM king_slots k JOIN properties p ON p.id=k.property_id WHERE k.ends_at > now() ORDER BY k.starts_at LIMIT 20`),
     listColoniaContent(),
     query<{ colonia: string; colonia_slug: string }>(`SELECT MIN(colonia) AS colonia, colonia_slug FROM properties GROUP BY colonia_slug ORDER BY colonia_slug`),
+    listPublishers(),
   ]);
+  const countByPhone = new Map(people.map((x) => [x.whatsapp, x.active]));
   const contentBySlug = new Map(colContent.map((c) => [c.colonia_slug, c]));
   const coloniaRows = [...new Map([...colList.map((c) => [c.colonia_slug, { slug: c.colonia_slug, name: c.colonia }] as const), ...colContent.map((c) => [c.colonia_slug, { slug: c.colonia_slug, name: c.name }] as const)]).values()];
   const by = Object.fromEntries(stats.map((s) => [s.status, s]));
@@ -91,7 +94,7 @@ export default async function Admin() {
             <div className="stack">
               <strong>{p.title}</strong>
               <div className="small muted">{OPERATIONS[p.operation].label} · {TYPES[p.type].label} · {p.colonia} · {formatPrice(p.price, p.operation)} · {p.owner_kind === "dueno" ? "dueño" : "agente"}</div>
-              <div className="small">WhatsApp: <a href={`https://wa.me/52${p.whatsapp}`} target="_blank" rel="noopener">{p.whatsapp}</a>{p.email ? ` · ${p.email}` : ""} · {formatDate(p.created_at)}</div>
+              <div className="small">WhatsApp: <a href={`https://wa.me/52${p.whatsapp}`} target="_blank" rel="noopener">{p.whatsapp}</a>{p.email ? ` · ${p.email}` : ""} · {formatDate(p.created_at)} · <strong>{countByPhone.get(p.whatsapp) ?? 1} anuncio(s) activos de esta persona</strong></div>
               <p className="small" style={{ whiteSpace: "pre-line", margin: 0 }}>{p.description}</p>
               <div className="row">
                 <form action={approve}><input type="hidden" name="id" value={p.id} /><button className="btn btn-small">Aprobar</button></form>
@@ -100,6 +103,36 @@ export default async function Admin() {
             </div>
           </div>
         ))}
+      </section>
+
+      <section>
+        <h2>Personas que publican ({people.length})</h2>
+        <p className="muted small">
+          Se identifican por su WhatsApp. Límite gratuito por defecto: <strong>{FREE_LISTING_LIMIT}</strong> anuncios activos (por revisar + publicados); se cambia con la variable <code>FREE_LISTING_LIMIT</code>.
+          Aquí puedes darle a una persona un límite propio (por ejemplo, un agente que pagó un plan), bloquear un número o dejar una nota. Un límite vacío usa el predeterminado.
+        </p>
+        <table className="table">
+          <thead><tr><th>WhatsApp</th><th>Activos</th><th>Total</th><th>Último</th><th>Límite propio</th><th>Nota</th><th></th></tr></thead>
+          <tbody>
+            {people.map((x) => (
+              <tr key={x.whatsapp} style={x.blocked ? { opacity: 0.6 } : undefined}>
+                <td><a href={`https://wa.me/52${x.whatsapp}`} target="_blank" rel="noopener">{x.whatsapp}</a></td>
+                <td><strong>{x.active}</strong> / {limitFor(x)}<br /><span className="muted small">{x.pending} por revisar · {x.approved} publicados</span></td>
+                <td>{x.total}</td>
+                <td className="small">{formatDate(x.last_at)}</td>
+                <td colSpan={3}>
+                  <form action={savePublisher} className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+                    <input type="hidden" name="whatsapp" value={x.whatsapp} />
+                    <input name="limit" defaultValue={x.listing_limit ?? ""} inputMode="numeric" placeholder={String(FREE_LISTING_LIMIT)} aria-label="Límite propio" style={{ width: 70, padding: "6px 8px" }} />
+                    <input name="note" defaultValue={x.note ?? ""} placeholder="Nota (agente, plan, etc.)" maxLength={300} style={{ width: 180, padding: "6px 8px" }} />
+                    <label className="check" style={{ gap: 4 }}><input type="checkbox" name="blocked" defaultChecked={x.blocked} /> Bloqueado</label>
+                    <button className="btn btn-small btn-ghost">Guardar</button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
 
       <section>

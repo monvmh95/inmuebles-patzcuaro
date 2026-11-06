@@ -7,6 +7,7 @@ import { newToken, normalizeMxPhone, randomId, slugify } from "@/lib/util";
 import { SITE_URL } from "@/lib/config";
 import { parseLand } from "@/lib/measures";
 import { FEATURE_KEYS, cleanFeatures } from "@/lib/features";
+import { activeCount, getPublisher, limitFor } from "@/lib/publishers";
 
 export const runtime = "nodejs";
 
@@ -40,7 +41,7 @@ const schema = z.object({
   website: z.string().max(0).optional(), // honeypot
 });
 
-const MAX_PER_HOUR = 4;
+const MAX_PER_HOUR = 12; // por IP; el control real por persona es el límite de anuncios activos por WhatsApp
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -52,6 +53,15 @@ export async function POST(req: Request) {
 
   const phone = normalizeMxPhone(d.whatsapp);
   if (!phone) return NextResponse.json({ error: "El WhatsApp debe tener 10 dígitos (ej. 434 123 4567)." }, { status: 400 });
+
+  const pub = await getPublisher(phone);
+  if (pub?.blocked) return NextResponse.json({ error: "Este número no puede publicar por ahora. Si crees que es un error, escríbenos." }, { status: 403 });
+  const limit = limitFor(pub);
+  const mine = await activeCount(phone);
+  if (mine >= limit) {
+    const c = process.env.CONTACT_EMAIL;
+    return NextResponse.json({ error: `Ya tienes ${mine} anuncios activos y el límite gratuito es ${limit}. Para publicar más, escríbenos${c ? ` a ${c}` : ""} o da de baja alguno que ya no esté disponible.` }, { status: 403 });
+  }
 
   const ip = clientIpHash(req);
   const [{ n }] = await query<{ n: number }>(
