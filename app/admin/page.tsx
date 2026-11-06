@@ -6,7 +6,7 @@ import { listPublishers, limitFor } from "@/lib/publishers";
 import { formatDate, formatPrice } from "@/lib/util";
 import { saveColonia } from "./actions";
 import { listColoniaContent } from "@/lib/colonias";
-import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport, setPrice, savePublisher } from "./actions";
+import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport, setPrice, savePublisher, handleSuggestion } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Administración", robots: { index: false, follow: false } };
@@ -40,6 +40,7 @@ export default async function Admin() {
     return <div className="notice"><h1>Administración</h1><p>Conecta la base de datos (Neon) para empezar a moderar.</p><form action={logout}><button className="btn btn-small">Salir</button></form></div>;
   }
 
+  const suggestions = await query<{ id: number; kind: string; message: string; contact: string | null; created_at: string }>(`SELECT id, kind, message, contact, created_at FROM suggestions WHERE NOT handled ORDER BY id DESC LIMIT 40`).catch(() => []);
   const [pending, approved, reports, stats, slots, colContent, colList, people] = await Promise.all([
     query<Row>(`SELECT * FROM properties WHERE status='pending' ORDER BY id ASC LIMIT 50`),
     query<Row>(`SELECT * FROM properties WHERE status='approved' ORDER BY approved_at DESC NULLS LAST LIMIT 40`),
@@ -133,6 +134,17 @@ export default async function Admin() {
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section>
+        <h2>Sugerencias y dudas ({suggestions.length})</h2>
+        {suggestions.length === 0 && <p className="muted">Sin mensajes nuevos.</p>}
+        {suggestions.map((x) => (
+          <div className="admin-item" key={x.id} style={{ gridTemplateColumns: "1fr" }}>
+            <div><strong>{x.kind}</strong> <span className="muted small">· {formatDate(x.created_at)}{x.contact ? ` · ${x.contact}` : ""}</span><p className="small" style={{ margin: "4px 0", whiteSpace: "pre-wrap" }}>{x.message}</p></div>
+            <div className="row"><form action={handleSuggestion}><input type="hidden" name="id" value={x.id} /><button className="btn btn-small btn-ghost">Marcar leído</button></form></div>
+          </div>
+        ))}
       </section>
 
       <section>

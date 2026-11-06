@@ -100,6 +100,11 @@ export async function resolveReport(fd: FormData) {
   await query(`UPDATE reports SET resolved=true WHERE id=$1`, [id(fd)]);
   refresh();
 }
+export async function handleSuggestion(fd: FormData) {
+  await guard();
+  await query(`UPDATE suggestions SET handled=true WHERE id=$1`, [id(fd)]);
+  refresh();
+}
 /** Solo para pruebas internas: agenda un turno de Rey sin cobro. */
 export async function grantKing(fd: FormData) {
   await guard();

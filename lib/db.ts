@@ -77,6 +77,15 @@ const SCHEMA = [
     last_used_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at   TIMESTAMPTZ NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS suggestions (
+    id         BIGSERIAL PRIMARY KEY,
+    kind       TEXT NOT NULL DEFAULT 'idea',
+    message    TEXT NOT NULL,
+    contact    TEXT,
+    ip_hash    TEXT,
+    handled    BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS email_norm TEXT`,
   `CREATE INDEX IF NOT EXISTS idx_properties_email_norm ON properties (email_norm)`,
   `CREATE TABLE IF NOT EXISTS publishers (

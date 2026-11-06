@@ -67,6 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <Link href={h("/guias/colonias")}>{t(`Colonias de ${CITY}`, `${CITY} neighborhoods`)}</Link><br />
                 <Link href={h("/verificacion")}>{t("Qué es “Verificado”", "What “Verified” means")}</Link><br />
                 <Link href="/mis-anuncios">{t("Mis anuncios", "My listings")}</Link><br />
+                <Link href="/sugerencias">{t("Sugerencias", "Feedback")}</Link><br />
                 <Link href="/terminos">{t("Términos", "Terms")}</Link> · <Link href="/privacidad">{t("Privacidad", "Privacy")}</Link>{lang === "en" && <span className="muted"> (Spanish)</span>}
               </div>
               <p className="muted small">
