@@ -4,10 +4,11 @@ import type { Property } from "@/lib/properties";
 import { formatPrice, pricePerM2, timeAgo } from "@/lib/format";
 import { PlaceholderArt } from "./Art";
 import VerifiedBadge from "./VerifiedBadge";
+import FavoriteButton from "./FavoriteButton";
 
 type CardProps = {
   p: Pick<Property, "operation" | "type" | "title" | "price" | "colonia" | "bedrooms" | "bathrooms" | "built_m2" | "land_m2" | "photos" | "verified_at"> &
-    Partial<Pick<Property, "slug" | "approved_at" | "created_at" | "confirmed_at">>;
+    Partial<Pick<Property, "slug" | "approved_at" | "created_at" | "confirmed_at" | "lake_view">>;
   featured?: boolean;
   /** Vista previa dentro del formulario: no es un enlace. */
   preview?: boolean;
@@ -29,6 +30,7 @@ export default function PropertyCard({ p, featured = false, preview = false }: C
         )}
         <span className="badge badge-op">{OPERATIONS[p.operation].label}</span>
         {p.verified_at && <span className="badge-verified"><VerifiedBadge small /></span>}
+        {p.lake_view && <span className="badge badge-lake">Vista al lago</span>}
       </div>
       <div className="card-body">
         <p className="card-price">
@@ -51,6 +53,7 @@ export default function PropertyCard({ p, featured = false, preview = false }: C
   return (
     <article className={`card${featured ? " card-featured" : ""}`}>
       {preview || !p.slug ? <div className="card-link">{body}</div> : <Link href={`/propiedad/${p.slug}`} className="card-link">{body}</Link>}
+      {!preview && p.slug && <FavoriteButton slug={p.slug} className="fav-card" />}
     </article>
   );
 }

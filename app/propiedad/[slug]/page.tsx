@@ -9,6 +9,8 @@ import PropertyCard from "@/components/PropertyCard";
 import Gallery from "@/components/Gallery";
 import ShareButtons from "@/components/ShareButtons";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import ZoneMap from "@/components/ZoneMap";
+import FavoriteButton from "@/components/FavoriteButton";
 import { CITY, OPERATIONS, SITE_URL, TYPES } from "@/lib/config";
 import { query } from "@/lib/db";
 import { getBySlug, listProperties } from "@/lib/properties";
@@ -60,9 +62,20 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
         <div>
           <Gallery photos={p.photos} title={p.title} label={propertyTitle(p)} />
 
-          <h1 style={{ marginTop: 20 }}>{p.title}</h1>
+          <div className="row" style={{ marginTop: 20, justifyContent: "space-between", flexWrap: "nowrap", alignItems: "flex-start" }}>
+            <h1 style={{ margin: 0 }}>{p.title}</h1>
+            <FavoriteButton slug={p.slug} className="fav-inline" />
+          </div>
           <p className="muted">{propertyTitle(p)}</p>
           <div className="prose">{p.description}</div>
+          {p.lake_view && <p><span className="verified" style={{ color: "var(--rebozo)", borderColor: "var(--rebozo)" }}>Vista al lago</span></p>}
+          {p.lat != null && p.lng != null && (
+            <section aria-label="Zona aproximada">
+              <h2 style={{ marginTop: 24 }}>Zona aproximada</h2>
+              <ZoneMap lat={p.lat} lng={p.lng} />
+              <p className="muted small">El área marcada es aproximada. Pide la dirección exacta al contactar al anunciante.</p>
+            </section>
+          )}
         </div>
 
         <aside className="aside">

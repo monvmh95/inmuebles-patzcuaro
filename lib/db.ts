@@ -23,7 +23,7 @@ const SCHEMA = [
     slug          TEXT UNIQUE NOT NULL,
     token_hash    TEXT NOT NULL,
     operation     TEXT NOT NULL CHECK (operation IN ('renta','venta','traspaso')),
-    type          TEXT NOT NULL CHECK (type IN ('casa','departamento','terreno','local','cuarto')),
+    type          TEXT NOT NULL CHECK (type IN ('casa','departamento','terreno','local','cuarto','bodega','huerta')),
     title         TEXT NOT NULL,
     description   TEXT NOT NULL,
     price         INTEGER,
@@ -46,6 +46,12 @@ const SCHEMA = [
     confirmed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
   )`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lake_view BOOLEAN NOT NULL DEFAULT false`,
+  `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check`,
+  `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check2`,
+  `ALTER TABLE properties ADD CONSTRAINT properties_type_check2 CHECK (type IN ('casa','departamento','terreno','local','cuarto','bodega','huerta'))`,
   `CREATE INDEX IF NOT EXISTS idx_properties_listing ON properties (status, operation, type, colonia_slug, approved_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_properties_ip ON properties (ip_hash, created_at)`,
   `CREATE TABLE IF NOT EXISTS reports (

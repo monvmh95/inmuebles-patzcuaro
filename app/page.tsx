@@ -33,7 +33,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
   const sp = await searchParams;
   const op = first(sp.op), type = first(sp.type), colonia = first(sp.colonia), q = first(sp.q).slice(0, 60);
   const max = Number(first(sp.max)) || undefined;
-  const filtering = Boolean(op || type || colonia || q || max);
+  const lake = first(sp.lake) === "1";
+  const filtering = Boolean(op || type || colonia || q || max || lake);
 
   const [list, colonias, counts, king] = await Promise.all([
     safe(() => listProperties({
@@ -42,6 +43,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
       colonia_slug: colonia || undefined,
       maxPrice: max,
       q: q || undefined,
+      lake: lake || undefined,
       limit: filtering ? 48 : 12,
     }), []),
     safe(() => listColonias(), []),
@@ -58,12 +60,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
           <span className="eyebrow">Pueblo Mágico · Michoacán</span>
           <h1>Tu próximo hogar en <em>{CITY}</em>, directo con el dueño</h1>
           <p className="hero-lede">Renta, venta y traspaso de casas, terrenos y locales. Contacta por WhatsApp, sin comisiones del sitio.</p>
-          <SearchBar op={op} type={type} colonia={colonia} max={max} colonias={colonias} />
+          <SearchBar op={op} type={type} colonia={colonia} max={max} lake={lake} colonias={colonias} />
           <div className="chips">
             <Link className="chip" href="/renta/casas">Casas en renta</Link>
             <Link className="chip" href="/venta/terrenos">Terrenos en venta</Link>
             <Link className="chip" href="/renta/departamentos">Departamentos en renta</Link>
             <Link className="chip" href="/renta/locales">Locales en renta</Link>
+            <Link className="chip" href="/?lake=1">Con vista al lago</Link>
+            <Link className="chip" href="/mapa">🗺 Ver en mapa</Link>
           </div>
         </div>
         <div className="hero-art" aria-hidden="false"><div className="arch-frame"><PortalesHero /></div></div>

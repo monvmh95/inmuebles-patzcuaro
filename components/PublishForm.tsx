@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { MAX_PHOTOS, OPERATIONS, TYPES, type Operation, type PropType } from "@/lib/config";
 import PropertyCard from "./PropertyCard";
+import LocationPicker from "./LocationPicker";
 
 async function compress(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file);
@@ -27,6 +28,7 @@ export default function PublishForm({ photosEnabled }: { photosEnabled: boolean 
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ manageUrl: string } | null>(null);
+  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [preview, setPreview] = useState<Parameters<typeof PropertyCard>[0]["p"] | null>(null);
 
   function stepValid(idx: number): boolean {
@@ -56,6 +58,7 @@ export default function PublishForm({ photosEnabled }: { photosEnabled: boolean 
       built_m2: num(fd.get("built_m2")),
       photos,
       verified_at: null,
+      lake_view: fd.get("lake_view") === "on",
       created_at: new Date().toISOString(),
     });
   }
@@ -113,6 +116,7 @@ export default function PublishForm({ photosEnabled }: { photosEnabled: boolean 
       land_m2: fd.get("land_m2"), built_m2: fd.get("built_m2"), owner_kind: fd.get("owner_kind"),
       whatsapp: fd.get("whatsapp"), email: fd.get("email"), website: fd.get("website"),
       accept: fd.get("accept") === "on", photos,
+      lat: geo?.lat ?? null, lng: geo?.lng ?? null, lake_view: fd.get("lake_view") === "on",
     };
     const res = await fetch("/api/propiedades", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const j = await res.json().catch(() => ({}));
@@ -171,6 +175,10 @@ export default function PublishForm({ photosEnabled }: { photosEnabled: boolean 
             <input name="colonia" required maxLength={60} placeholder="Centro, San Francisco, Ibarra…" />
           </label>
         </div>
+        <label className="check">
+          <input name="lake_view" type="checkbox" />
+          <span>Tiene vista al lago</span>
+        </label>
         <div className="grid4">
           <label>Recámaras<input name="bedrooms" type="number" min={0} max={30} inputMode="numeric" /></label>
           <label>Baños<input name="bathrooms" type="number" min={0} max={30} inputMode="numeric" /></label>
@@ -205,6 +213,10 @@ export default function PublishForm({ photosEnabled }: { photosEnabled: boolean 
           ) : (
             <p className="muted small">La subida de fotos se activará pronto. Por ahora puedes publicar sin fotos.</p>
           )}
+        </fieldset>
+        <fieldset>
+          <legend>Zona en el mapa (opcional)</legend>
+          <LocationPicker value={geo} onChange={setGeo} />
         </fieldset>
         <label>Descripción
           <textarea name="description" required minLength={30} maxLength={3000} rows={7} placeholder="Estado de la propiedad, servicios, distancia al centro, condiciones de renta o venta (depósito, contrato, mascotas)…" />

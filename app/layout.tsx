@@ -29,9 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Logo /> {SITE_NAME}
             </Link>
             <nav className="nav" aria-label="Principal">
-              <Link href="/renta">Renta</Link>
-              <Link href="/venta">Venta</Link>
-              <Link href="/guias/colonias">Colonias</Link>
+              <Link href="/renta" className="nav-sec">Renta</Link>
+              <Link href="/venta" className="nav-sec">Venta</Link>
+              <Link href="/mapa" className="nav-sec">Mapa</Link>
+              <Link href="/favoritos" className="nav-fav" aria-label="Mis favoritos" title="Mis favoritos">♡<span className="nav-fav-t"> Favoritos</span></Link>
               <Link href="/publicar" className="btn btn-small">Publicar gratis</Link>
             </nav>
           </div>

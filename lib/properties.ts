@@ -28,10 +28,13 @@ export type Property = {
   approved_at: string | null;
   confirmed_at: string;
   verified_at: string | null;
+  lat: number | null;
+  lng: number | null;
+  lake_view: boolean;
 };
 
 const PUBLIC_COLS = `id, slug, operation, type, title, description, price, colonia, colonia_slug, bedrooms, bathrooms,
-  land_m2, built_m2, owner_kind, whatsapp, photos, status, views, wa_clicks, created_at, approved_at, confirmed_at, verified_at`;
+  land_m2, built_m2, owner_kind, whatsapp, photos, status, views, wa_clicks, created_at, approved_at, confirmed_at, verified_at, lat, lng, lake_view`;
 
 export type Filters = {
   operation?: Operation;
@@ -40,6 +43,7 @@ export type Filters = {
   minPrice?: number;
   maxPrice?: number;
   q?: string;
+  lake?: boolean;
   limit?: number;
   offset?: number;
 };
@@ -56,6 +60,7 @@ export async function listProperties(f: Filters = {}): Promise<Property[]> {
   if (f.colonia_slug) add("colonia_slug = $$", f.colonia_slug);
   if (f.minPrice != null) add("price >= $$", f.minPrice);
   if (f.maxPrice != null) add("price <= $$", f.maxPrice);
+  if (f.lake) where.push("lake_view = true");
   if (f.q) {
     params.push(`%${f.q.replace(/[%_\\]/g, "")}%`);
     const n = params.length;
@@ -92,4 +97,22 @@ export async function listAllSlugs(): Promise<{ slug: string; updated: string }[
 
 export async function listLandingCombos(): Promise<{ operation: string; type: string; colonia_slug: string }[]> {
   return query(`SELECT DISTINCT operation, type, colonia_slug FROM properties WHERE ${FRESH}`);
+}
+
+export type MapPoint = Pick<Property, "slug" | "operation" | "type" | "title" | "price" | "colonia" | "photos" | "lat" | "lng">;
+
+export async function listMapPoints(f: { operation?: Operation; type?: PropType; lake?: boolean } = {}): Promise<MapPoint[]> {
+  const where = [FRESH, "lat IS NOT NULL", "lng IS NOT NULL"];
+  const params: unknown[] = [];
+  if (f.operation) { params.push(f.operation); where.push(`operation = $${params.length}`); }
+  if (f.type) { params.push(f.type); where.push(`type = $${params.length}`); }
+  if (f.lake) where.push("lake_view = true");
+  return query<MapPoint>(
+    `SELECT slug, operation, type, title, price, colonia, photos, lat, lng FROM properties WHERE ${where.join(" AND ")}
+     ORDER BY approved_at DESC NULLS LAST LIMIT 300`, params);
+}
+
+export async function listBySlugs(slugs: string[]): Promise<Property[]> {
+  if (!slugs.length) return [];
+  return query<Property>(`SELECT ${PUBLIC_COLS} FROM properties WHERE slug = ANY($1::text[]) AND ${FRESH}`, [slugs.slice(0, 60)]);
 }

@@ -27,3 +27,11 @@ export function pricePerM2(p: { price: number | null; operation: string; type: s
   if (!area || area <= 0) return null;
   return Math.round(p.price / area);
 }
+
+/** Precio corto para pines de mapa: $6.5k, $1.2M. */
+export function shortPrice(price: number | null): string {
+  if (price == null) return "Tratar";
+  if (price >= 1_000_000) return `$${(price / 1_000_000).toFixed(price % 1_000_000 === 0 ? 0 : 1)}M`;
+  if (price >= 1_000) return `$${(price / 1_000).toFixed(price % 1_000 === 0 ? 0 : 1)}k`;
+  return `$${price}`;
+}
