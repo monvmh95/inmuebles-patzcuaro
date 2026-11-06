@@ -35,6 +35,18 @@ function Card({ it }: { it: MyItem }) {
     if (!res.ok) return setMsg("No se pudo completar la acción.");
     setMsg(action === "renew" ? "Listo: seguirá visible 90 días más." : "Anuncio dado de baja."); router.refresh();
   }
+  async function copyLink() {
+    const url = `${window.location.origin}/propiedad/${it.slug}`;
+    try {
+      if (navigator.share && /Android|iPhone|iPad/i.test(navigator.userAgent)) { await navigator.share({ title: it.title, url }); return; }
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const ta = document.createElement("textarea"); ta.value = url; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch { /* sin portapapeles */ }
+      ta.remove();
+    }
+    setMsg("Enlace copiado. Pégalo en tu publicación de Facebook o donde quieras.");
+  }
   const live = it.status === "approved" || it.status === "pending";
 
   return (
@@ -53,9 +65,10 @@ function Card({ it }: { it: MyItem }) {
         <div className="stat"><b>{it.wa_clicks}</b>clics a WhatsApp</div>
       </div>
       {it.status === "approved" && <p className="muted small" style={{ margin: 0 }}>Visible hasta el {it.expires}. {it.edited && "Editado recientemente."}</p>}
-      {it.status === "pending" && <p className="muted small" style={{ margin: 0 }}>Lo estamos revisando. Normalmente lo aprobamos el mismo día.</p>}
+      {it.status === "pending" && <p className="muted small" style={{ margin: 0 }}>Lo estamos revisando. Normalmente lo aprobamos el mismo día; cuando se publique podrás copiar su enlace aquí para compartirlo.</p>}
       {it.status === "rejected" && <p className="muted small" style={{ margin: 0 }}>No cumplió nuestras reglas. Corrígelo con “Editar” y lo revisamos otra vez.</p>}
       <div className="row">
+        {it.status === "approved" && <button className="btn btn-small" onClick={copyLink}>Copiar enlace para compartir</button>}
         {it.status === "approved" && <a className="btn btn-small btn-ghost" href={`/propiedad/${it.slug}`}>Ver anuncio</a>}
         {live && <button className="btn btn-small" disabled={busy} onClick={() => act("renew")}>Sigue disponible</button>}
         {it.status !== "archived" && <button className="btn btn-small btn-ghost" disabled={busy} onClick={() => setEditing((v) => !v)}>{editing ? "Cerrar" : "Editar"}</button>}

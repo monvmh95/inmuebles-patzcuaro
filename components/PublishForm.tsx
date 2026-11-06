@@ -93,6 +93,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
     setAcct((a) => (a ? { ...a, email: null, whatsapp: null, owner_kind: null } : a)); setMailIn(""); setCodeSent(false);
   }
   const sms = acct?.channel === "sms";
+  const [otherWa, setOtherWa] = useState(false);
   const needsMail = Boolean(acct?.enabled && !acct.email);
 
   const [priceDigits, setPriceDigits] = useState("");
@@ -458,6 +459,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
               <p style={{ margin: 0 }}>✓ {t("Publicas como", "Posting as")} <strong>{acct.email}</strong></p>
               <button type="button" className="linklike small" onClick={notMe}>{sms ? t("No soy yo / usar otro número", "Not me / use another number") : t("No soy yo / usar otro correo", "Not me / use another email")}</button>
               <input type="hidden" name="email" value={sms ? "" : acct.email} />
+              {sms && !otherWa && <p className="muted small" style={{ margin: 0 }}>{t("Quien se interese te escribirá a este mismo número por WhatsApp.", "Interested people will message this same number on WhatsApp.")} <button type="button" className="linklike small" onClick={() => setOtherWa(true)}>{t("Usar otro WhatsApp", "Use another WhatsApp")}</button></p>}
             </div>
           ) : (
             <div className="acct-box">
@@ -487,9 +489,11 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
           )
         )}
         <div className="grid2">
-          <label>{t("Tu WhatsApp (10 dígitos)", "Your WhatsApp (10 digits)")}
-            <input key={`wa-${acct?.whatsapp ?? ""}`} name="whatsapp" required inputMode="tel" placeholder="434 123 4567" defaultValue={acct?.whatsapp ?? ""} />
-          </label>
+          {sms && !otherWa ? <input type="hidden" name="whatsapp" value={acct?.whatsapp ?? ""} /> : (
+            <label>{t("Tu WhatsApp (10 dígitos)", "Your WhatsApp (10 digits)")}
+              <input key={`wa-${acct?.whatsapp ?? ""}`} name="whatsapp" required inputMode="tel" placeholder="434 123 4567" defaultValue={acct?.whatsapp ?? ""} />
+            </label>
+          )}
           {acct && !acct.enabled && (
             <label>{t("Tu correo (no se muestra)", "Your email (not shown)")}
               <input name="email" type="email" required maxLength={120} autoComplete="email" placeholder="tu@correo.com" />
