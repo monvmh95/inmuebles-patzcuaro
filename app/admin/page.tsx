@@ -6,7 +6,7 @@ import { listPublishers, limitFor } from "@/lib/publishers";
 import { formatDate, formatPrice } from "@/lib/util";
 import { saveColonia } from "./actions";
 import { listColoniaContent } from "@/lib/colonias";
-import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport, setPrice, savePublisher, handleSuggestion, deleteAllListings } from "./actions";
+import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport, setPrice, savePublisher, handleSuggestion, deleteAllListings, openTestSession } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Administración", robots: { index: false, follow: false } };
@@ -18,8 +18,9 @@ type Row = {
   views: number; wa_clicks: number; created_at: string; confirmed_at: string; owner_kind: string;
 };
 
-export default async function Admin({ searchParams }: { searchParams?: Promise<{ borrado?: string }> }) {
-  const borrado = (await searchParams)?.borrado;
+export default async function Admin({ searchParams }: { searchParams?: Promise<{ borrado?: string; sesion?: string }> }) {
+  const sp = await searchParams;
+  const borrado = sp?.borrado;
   if (!adminConfigured()) {
     return (
       <div className="notice">
@@ -219,6 +220,16 @@ export default async function Admin({ searchParams }: { searchParams?: Promise<{
             <button className="btn btn-small">Guardar</button>
           </form>
         </details>
+      </section>
+
+      <section>
+        <h2>Entrar sin SMS (pruebas)</h2>
+        {sp?.sesion === "invalida" && <p className="error" role="alert">Escribe un celular de 10 dígitos.</p>}
+        <p className="muted small" style={{ maxWidth: 560 }}>Abre en este navegador una sesión de cuenta para ese celular, como si lo hubieras verificado por SMS, sin gastar créditos. Úsalo para probar publicar y el calendario. Solo funciona estando dentro del panel de administración.</p>
+        <form action={openTestSession} className="form stack" style={{ maxWidth: 420 }}>
+          <label>Celular de la cuenta (10 dígitos)<input name="phone" inputMode="tel" required placeholder="434 123 4567" /></label>
+          <button className="btn btn-small">Entrar y abrir Publicar</button>
+        </form>
       </section>
 
       <section>

@@ -5,7 +5,9 @@ import { prewarmTranslations } from "@/lib/ai";
 import { redirect } from "next/navigation";
 import { checkPassword, clearAdminCookie, isAdmin, setAdminCookie } from "@/lib/admin";
 import { del } from "@vercel/blob";
+import { startSession } from "@/lib/account";
 import { query } from "@/lib/db";
+import { normalizeMxPhone } from "@/lib/util";
 import { scheduleKing } from "@/lib/king";
 import { randomId, slugify } from "@/lib/util";
 import { saveColoniaContent } from "@/lib/colonias";
@@ -133,4 +135,14 @@ export async function deleteAllListings(fd: FormData) {
   for (let i = 0; i < urls.length; i += 100) await del(urls.slice(i, i + 100)).catch((e) => console.error("blob del:", e));
   refresh();
   redirect(`/admin?borrado=${deleted.length}`);
+}
+
+/** Solo admin: abre en ESTE navegador una sesión de cuenta (como si hubiera verificado ese celular por SMS), sin gastar créditos. Para pruebas y soporte. */
+export async function openTestSession(fd: FormData) {
+  await guard();
+  const phone = normalizeMxPhone(String(fd.get("phone") ?? ""));
+  if (!phone) redirect("/admin?sesion=invalida");
+  await startSession(phone, "sms");
+  console.warn("admin: sesión de prueba abierta para", phone.slice(0, 3) + "****" + phone.slice(-2));
+  redirect("/publicar");
 }
