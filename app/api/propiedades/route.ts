@@ -59,7 +59,13 @@ export async function POST(req: Request) {
 
   // Con verificación activa (SMS o correo), publicar exige una sesión confirmada. Si no, solo se pide el correo.
   const verifyOn = smsEnabled() || mailEnabled();
-  const session = verifyOn ? await getSession().catch(() => null) : null;
+  let session: Awaited<ReturnType<typeof getSession>> = null;
+  if (verifyOn) {
+    try { session = await getSession(); } catch (e) {
+      console.error("propiedades: getSession falló", e);
+      return NextResponse.json({ error: "Hubo un problema temporal con tu sesión. Intenta publicar de nuevo en unos segundos." }, { status: 503 });
+    }
+  }
   let email = d.email ?? "";
   let emailNorm: string;
   if (verifyOn) {

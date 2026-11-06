@@ -57,7 +57,17 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
   const [authMsg, setAuthMsg] = useState("");
   const [cool, setCool] = useState(0);
   useEffect(() => {
-    fetch("/api/cuenta/yo", { cache: "no-store" }).then((r) => r.json()).then(setAcct).catch(() => setAcct({ enabled: false, email: null, whatsapp: null, owner_kind: null }));
+    const load = async (tries: number): Promise<void> => {
+      try {
+        const r = await fetch("/api/cuenta/yo", { cache: "no-store" });
+        if (r.status === 503 && tries > 0) { await new Promise((ok) => setTimeout(ok, 1500)); return load(tries - 1); }
+        setAcct(await r.json());
+      } catch {
+        if (tries > 0) { await new Promise((ok) => setTimeout(ok, 1500)); return load(tries - 1); }
+        setAcct({ enabled: false, email: null, whatsapp: null, owner_kind: null });
+      }
+    };
+    load(2);
   }, []);
   useEffect(() => {
     if (cool <= 0) return;

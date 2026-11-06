@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   if (!p && !email) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
   const kind = p ? "sms" : "email";
   const val = (p ?? email) as string;
-  const good = kind === "sms" ? await verifyOtp(val, code).catch(() => false) : await verifyCode(identKey(kind, val), code);
+  const good = kind === "sms" ? await verifyOtp(val, code).catch((e) => { console.error("verificar: OTP falló", e); return false; }) : await verifyCode(identKey(kind, val), code);
   if (!good) return NextResponse.json({ error: "Código incorrecto o vencido. Pide uno nuevo." }, { status: 400 });
   const acc = await startSession(val, kind);
   return NextResponse.json({ ok: true, email: acc.email, whatsapp: acc.whatsapp, owner_kind: acc.owner_kind, channel: kind });

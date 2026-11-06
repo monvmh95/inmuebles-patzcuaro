@@ -14,7 +14,12 @@ export default async function MisAnuncios() {
   if (!mailEnabled() && !smsEnabled()) {
     return <div className="notice"><h1>Mis anuncios</h1><p>Esta sección estará disponible muy pronto. Mientras tanto, usa el enlace privado que recibiste al publicar cada anuncio.</p></div>;
   }
-  const s = await getSession().catch(() => null);
+  let s: Awaited<ReturnType<typeof getSession>>;
+  try { s = await getSession(); } catch (e) {
+    // Un fallo temporal de la base no debe parecer "sesión perdida" ni gastar otro SMS.
+    console.error("mis-anuncios: getSession falló", e);
+    return <div className="notice"><h1>Mis anuncios</h1><p>No pudimos cargar tu cuenta en este momento. Tu sesión sigue guardada: recarga la página en unos segundos (no pidas otro código).</p></div>;
+  }
   if (!s) return <AccountLogin sms={smsEnabled()} />;
   const rows = await query<{ slug: string; title: string; description: string; price: number | null; whatsapp: string; status: string; operation: string; views: number; wa_clicks: number; photos: string[]; confirmed_at: string; edited_at: string | null }>(
     `SELECT slug, title, description, price, whatsapp, status, operation, views, wa_clicks, photos, confirmed_at, edited_at
