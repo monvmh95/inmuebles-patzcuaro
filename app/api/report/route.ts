@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
+import { notifyAdmin } from "@/lib/notify";
 import { query } from "@/lib/db";
 import { clientIpHash } from "@/lib/request";
 
@@ -18,5 +20,6 @@ export async function POST(req: Request) {
   const rows = await query<{ id: number }>(`SELECT id FROM properties WHERE slug = $1`, [slug]);
   if (!rows[0]) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   await query(`INSERT INTO reports (property_id, reason, ip_hash) VALUES ($1, $2, $3)`, [rows[0].id, reason, ip]);
+  after(() => notifyAdmin("Anuncio reportado", reason.slice(0, 200)));
   return NextResponse.json({ ok: true });
 }

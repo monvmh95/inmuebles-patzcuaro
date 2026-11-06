@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
+import { notifyAdmin } from "@/lib/notify";
 import { z } from "zod";
 import { query } from "@/lib/db";
 import { MAX_PHOTOS, OPERATIONS, TYPES, inBounds, roundGeo, typesForOp } from "@/lib/config";
@@ -135,5 +137,6 @@ export async function POST(req: Request) {
     ],
   );
   if (session) await query(`UPDATE accounts SET whatsapp = $2, owner_kind = $3 WHERE email_norm = $1`, [session.email_norm, phone, d.owner_kind]).catch(() => {});
+  after(() => notifyAdmin("Nuevo anuncio por aprobar", `${OPERATIONS[d.operation as keyof typeof OPERATIONS]?.label ?? d.operation}: ${d.title}`));
   return NextResponse.json({ ok: true, manageUrl: `${SITE_URL}/mi-anuncio/${token}`, manageToken: token });
 }

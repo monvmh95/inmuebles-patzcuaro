@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
+import { notifyAdmin } from "@/lib/notify";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSession } from "@/lib/account";
@@ -29,10 +31,11 @@ export async function PATCH(req: Request, ctx: Ctx) {
   const r = await query(
     `UPDATE properties SET title=$3, description=$4, price=$5, whatsapp=$6, edited_at=now(),
             status = CASE WHEN status='rejected' OR (status='approved' AND (title <> $3 OR description <> $4 OR whatsapp <> $6)) THEN 'pending' ELSE status END
-      WHERE slug=$1 AND email_norm=$2 AND status <> 'archived' RETURNING id`,
+      WHERE slug=$1 AND email_norm=$2 AND status <> 'archived' RETURNING id, status`,
     [slug, s.email_norm, d.title, d.description, d.price, phone],
   );
   if (!r.length) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  if ((r[0] as { status?: string }).status === "pending") after(() => notifyAdmin("Anuncio editado: por aprobar de nuevo", d.title));
   revalidatePath("/", "layout");
   return NextResponse.json({ ok: true });
 }

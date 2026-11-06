@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
+import { notifyAdmin } from "@/lib/notify";
 import { z } from "zod";
 import { query } from "@/lib/db";
 import { clientIpHash } from "@/lib/request";
@@ -19,5 +21,6 @@ export async function POST(req: Request) {
   const [{ n }] = await query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM suggestions WHERE ip_hash = $1 AND created_at > now() - interval '1 hour'`, [ip]);
   if (n >= 5) return NextResponse.json({ error: "Ya nos enviaste varios mensajes. Intenta más tarde." }, { status: 429 });
   await query(`INSERT INTO suggestions (kind, message, contact, ip_hash) VALUES ($1,$2,$3,$4)`, [d.kind, d.message, d.contact || null, ip]);
+  after(() => notifyAdmin(`Sugerencia (${d.kind})`, d.message.slice(0, 200)));
   return NextResponse.json({ ok: true });
 }
