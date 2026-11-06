@@ -7,6 +7,9 @@ import { Logo } from "@/components/Art";
 import { LangProvider } from "@/components/LangProvider";
 import { getLang, getPublicPath, hf, tf } from "@/lib/lang";
 import { switchPath } from "@/lib/i18n";
+import { cookies } from "next/headers";
+import NavMenu from "@/components/NavMenu";
+import { SESSION_COOKIE } from "@/lib/account";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = tf(await getLang());
@@ -31,6 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const lang = await getLang();
   const t = tf(lang);
   const h = hf(lang);
+  const signedIn = (await cookies()).has(SESSION_COOKIE);
   const other = switchPath(lang, await getPublicPath());
   return (
     <html lang={lang === "en" ? "en" : "es-MX"}>
@@ -46,9 +50,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <Link href={h("/venta")} className="nav-sec">{t("Venta", "Sale")}</Link>
                 <Link href={h("/hospedaje")} className="nav-sec">{t("Hospedaje", "Lodging")}</Link>
                 <Link href={h("/mapa")} className="nav-sec">{t("Mapa", "Map")}</Link>
-                <Link href="/mis-anuncios" className="nav-sec">{t("Mis anuncios", "My listings")}</Link>
+                <Link href="/mis-anuncios" className="nav-sec">{signedIn ? "● " : ""}{t("Mis anuncios", "My listings")}</Link>
                 <Link href={h("/favoritos")} className="nav-fav" aria-label={t("Mis favoritos", "My favorites")} title={t("Mis favoritos", "My favorites")}>♡<span className="nav-fav-t"> {t("Favoritos", "Favorites")}</span></Link>
-                <a href={other} className="lang-switch" hrefLang={lang === "en" ? "es-MX" : "en"} lang={lang === "en" ? "es" : "en"} aria-label={lang === "en" ? "Ver en español" : "View in English"}>{lang === "en" ? "ES" : "EN"}</a>
+                <a href={other} className="lang-switch nav-sec" hrefLang={lang === "en" ? "es-MX" : "en"} lang={lang === "en" ? "es" : "en"} aria-label={lang === "en" ? "Ver en español" : "View in English"}>{lang === "en" ? "ES" : "EN"}</a>
+                <NavMenu otherLang={other} signedIn={signedIn} />
                 <Link href={h("/publicar")} className="btn btn-small">{t("Publicar gratis", "List for free")}</Link>
               </nav>
             </div>

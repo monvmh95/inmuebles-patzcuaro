@@ -302,10 +302,14 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
       <div className="notice notice-ok">
         <h2>{t("¡Recibimos tu anuncio!", "We received your listing!")}</h2>
         <p>{t("Lo revisaremos y aparecerá publicado en cuanto lo aprobemos (normalmente el mismo día).", "We will review it and it will go live as soon as it is approved (usually the same day).")}</p>
-        <p><strong>{t("Guarda este enlace privado.", "Save this private link.")}</strong> {t("Con él puedes ver las visitas, confirmar que sigue disponible o darlo de baja. No lo compartas.", "With it you can see visits, confirm the listing is still available or take it down. Do not share it.")}</p>
-        <p className="mono"><a href={done.manageUrl}>{done.manageUrl}</a></p>
-        <button className="btn btn-small" onClick={() => navigator.clipboard?.writeText(done.manageUrl)}>{t("Copiar enlace", "Copy link")}</button>
-        {acct?.email && <p><a className="btn btn-small" href={localizePath(lang, "/mis-anuncios")}>{t("Ver todos mis anuncios", "See all my listings")}</a></p>}
+        {acct?.email && <p><a className="btn" href={localizePath(lang, "/mis-anuncios")}>{t("Ir a Mis anuncios", "Go to My listings")}</a></p>}
+        <p className="muted small">{t("Ahí ves su estado, visitas y clics, lo editas, copias el enlace para compartirlo en Facebook y, si es hospedaje, administras el calendario.", "There you see its status, visits and clicks, edit it, copy the link to share it and, for lodging, manage the calendar.")}</p>
+        <details style={{ marginTop: 10 }}>
+          <summary>{t("Enlace privado de respaldo", "Private backup link")}</summary>
+          <p className="muted small">{t("Sirve para administrar solo este anuncio sin entrar a tu cuenta. No lo compartas.", "Lets you manage only this listing without signing in. Do not share it.")}</p>
+          <p className="mono"><a href={done.manageUrl}>{done.manageUrl}</a></p>
+          <button type="button" className="btn btn-small" onClick={() => navigator.clipboard?.writeText(done.manageUrl)}>{t("Copiar enlace", "Copy link")}</button>
+        </details>
         <p className="muted small" style={{ marginTop: 14 }}>
           {t("¿Quieres el sello", "Want the")} <strong>{t("Verificado", "Verified")}</strong>{t("? Cuando revisemos tu anuncio nos comunicaremos al número que publicaste.", " badge? When we review your listing we will contact the number you provided.")} <a href={localizePath(lang, "/verificacion")}>{t("Cómo funciona", "How it works")}</a>.
         </p>
@@ -315,6 +319,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
 
   return (
     <form ref={formRef} onSubmit={onSubmit} onWheel={(e) => { const el = e.target as HTMLElement; if (el instanceof HTMLInputElement && el.type === "number") el.blur(); }} className="form wizard" noValidate>
+      <p className="steps-now muted small">{t("Paso", "Step")} {step + 1} {t("de", "of")} {STEPS.length}: <strong>{STEPS[step]}</strong></p>
       <ol className="steps" aria-label={t("Progreso", "Progress")}>
         {STEPS.map((s, i) => (
           <li key={s} className={i === step ? "on" : i < step ? "done" : ""} aria-current={i === step ? "step" : undefined}>

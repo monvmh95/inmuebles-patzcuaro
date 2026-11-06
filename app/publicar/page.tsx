@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import PublishForm from "@/components/PublishForm";
 import { CITY } from "@/lib/config";
@@ -24,10 +25,11 @@ export default async function Publicar() {
       <h1>{t("Publica tu propiedad gratis", "List your property for free")}</h1>
       <p className="muted" style={{ maxWidth: "60ch" }}>
         {t(
-          "No necesitas crear cuenta. Revisamos cada anuncio antes de mostrarlo para cuidar a quienes buscan. Recibirás un enlace privado para ver tus visitas y darlo de baja.",
-          "No account needed. We review every listing before showing it, to protect people who are searching. You will get a private link to see your visits and take the listing down. Listings are published in Spanish, the site’s main language, and shown to English readers with an automatic translation.",
+          "Confirmas tu celular con un código SMS (solo la primera vez en cada dispositivo) y listo: no hay contraseñas. Revisamos cada anuncio antes de mostrarlo para cuidar a quienes buscan. Después administras tus anuncios, fotos y calendario desde Mis anuncios.",
+          "You confirm your phone with an SMS code (only the first time on each device) and that is it: no passwords. We review every listing before showing it, to protect people who are searching. Afterwards you manage your listings, photos and calendar from My listings. Listings are published in Spanish, the site’s main language, and shown to English readers with an automatic translation.",
         )}
       </p>
+      <p className="small" style={{ marginTop: 8 }}>{t("¿Ya publicaste?", "Already listed?")} <Link href="/mis-anuncios">{t("Entra a Mis anuncios", "Go to My listings")}</Link></p>
       <PublishForm photosEnabled={Boolean(process.env.BLOB_READ_WRITE_TOKEN)} aiEnabled={aiEnabled()} />
     </>
   );

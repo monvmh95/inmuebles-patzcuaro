@@ -338,3 +338,17 @@ a.verified:hover { background: #eef6f3; color: var(--accent); }
 .cf-chip button { border: 0; background: transparent; cursor: pointer; font-size: 1rem; line-height: 1; color: inherit; }
 .book-box label { display: grid; gap: 4px; }
 .book-box select { max-width: 140px; }
+
+/* Menú de celular */
+.navmenu { display: none; position: relative; }
+.navmenu-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; font: 650 .85rem/1 inherit; cursor: pointer; position: relative; min-height: 40px; }
+.navmenu-dot { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent, #2f7d4f); }
+.navmenu-scrim { position: fixed; inset: 60px 0 0 0; background: rgba(0,0,0,.35); z-index: 30; }
+.navmenu-panel { position: fixed; top: 60px; left: 0; right: 0; z-index: 31; background: var(--surface); border-bottom: 1px solid var(--line); box-shadow: 0 12px 24px rgba(0,0,0,.18); padding: 8px 16px 14px; display: flex; flex-direction: column; }
+.navmenu-panel a { display: block; padding: 14px 4px; font-size: 1.05rem; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+.navmenu-panel a:last-child { border-bottom: 0; }
+.navmenu-panel a.navmenu-main { font-weight: 750; color: var(--brand); }
+.navmenu-panel a small { display: block; font-weight: 400; font-size: .82rem; color: var(--muted); margin-top: 2px; }
+@media (max-width: 560px) { .navmenu { display: block; } .nav a.nav-fav { display: none; } .nav .lang-switch { display: none; } }
+@media (max-width: 400px) { .navmenu-btn-t { display: none; } }
+.steps-now { display: none; margin: 0 0 6px; } @media (max-width: 560px) { .steps-now { display: block; } }
