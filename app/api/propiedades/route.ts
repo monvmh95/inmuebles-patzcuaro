@@ -54,7 +54,9 @@ const schema = z.object({
 const MAX_PER_HOUR = 12; // por IP; el control real por persona es el límite de anuncios activos por WhatsApp
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => null);
+  const raw = await req.json().catch(() => null);
+  // Campos que no existen en el formulario (p. ej. los de hospedaje en una casa) llegan como null: se tratan como vacíos.
+  const body = raw && typeof raw === "object" ? Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== null)) : raw;
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Datos inválidos" }, { status: 400 });
