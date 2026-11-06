@@ -382,3 +382,16 @@ html, body { overflow-x: clip; }
 }
 @media (max-width: 340px) { .logo { font-size: .8rem; } .seg-opt span { font-size: .74rem; padding: 9px 2px; } }
 @media (max-width: 340px) { .nav .btn { padding: 6px 8px; font-size: .72rem; } .logo { font-size: .72rem; } .logo svg { width: 18px; height: 18px; } .navmenu-btn { padding: 6px 9px; } }
+
+/* Tablas del panel como tarjetas en celular */
+@media (max-width: 720px) {
+  .table, .table tbody, .table tr, .table td { display: block; width: 100%; }
+  .table thead { display: none; }
+  .table tr { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 6px 12px; margin-bottom: 12px; }
+  .table td { border-bottom: 0; padding: 8px 0; overflow-wrap: anywhere; }
+  .table td + td { border-top: 1px dashed var(--line); }
+  .table td[data-label]::before { content: attr(data-label); display: block; font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 2px; }
+  .table form.row input:not([type=hidden]):not([type=checkbox]) { flex: 1 1 100%; width: 100% !important; min-width: 0; }
+  .table .row { flex-wrap: wrap; }
+}
+@media (max-width: 720px) { .table .btn { white-space: nowrap; flex: 0 0 auto; } .table form.row[style*="nowrap"] input:not([type=hidden]) { flex: 1 1 auto !important; width: auto !important; } }

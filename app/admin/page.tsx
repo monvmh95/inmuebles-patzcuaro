@@ -120,11 +120,11 @@ export default async function Admin({ searchParams }: { searchParams?: Promise<{
           <tbody>
             {people.map((x) => (
               <tr key={x.whatsapp} style={x.blocked ? { opacity: 0.6 } : undefined}>
-                <td><a href={`https://wa.me/52${x.whatsapp}`} target="_blank" rel="noopener">{x.whatsapp}</a>{x.emails ? <><br /><span className="muted small">{x.emails}</span></> : null}</td>
-                <td><strong>{x.active}</strong> / {limitFor(x)}<br /><span className="muted small">{x.pending} por revisar · {x.approved} publicados</span></td>
-                <td>{x.total}</td>
-                <td className="small">{formatDate(x.last_at)}</td>
-                <td colSpan={3}>
+                <td data-label="WhatsApp"><a href={`https://wa.me/52${x.whatsapp}`} target="_blank" rel="noopener">{x.whatsapp}</a>{x.emails ? <><br /><span className="muted small">{x.emails}</span></> : null}</td>
+                <td data-label="Activos"><strong>{x.active}</strong> / {limitFor(x)}<br /><span className="muted small">{x.pending} por revisar · {x.approved} publicados</span></td>
+                <td data-label="Total">{x.total}</td>
+                <td className="small" data-label="Último">{formatDate(x.last_at)}</td>
+                <td colSpan={3} data-label="Límite y nota">
                   <form action={savePublisher} className="row" style={{ gap: 6, flexWrap: "wrap" }}>
                     <input type="hidden" name="whatsapp" value={x.whatsapp} />
                     <input name="limit" defaultValue={x.listing_limit ?? ""} inputMode="numeric" placeholder={String(FREE_LISTING_LIMIT)} aria-label="Límite propio" style={{ width: 70, padding: "6px 8px" }} />
@@ -170,8 +170,8 @@ export default async function Admin({ searchParams }: { searchParams?: Promise<{
           <tbody>
             {approved.map((p) => (
               <tr key={p.id}>
-                <td><a href={`/propiedad/${p.slug}`} target="_blank">{p.title}</a><br /><span className="muted small">{p.colonia}</span></td>
-                <td>
+                <td data-label="Anuncio"><a href={`/propiedad/${p.slug}`} target="_blank">{p.title}</a><br /><span className="muted small">{p.colonia}</span></td>
+                <td data-label="Precio">
                   <form action={setPrice} className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
                     <input type="hidden" name="id" value={p.id} />
                     <input name="price" defaultValue={p.price ?? ""} inputMode="numeric" aria-label="Precio" style={{ width: 110, padding: "6px 8px" }} />
@@ -179,8 +179,8 @@ export default async function Admin({ searchParams }: { searchParams?: Promise<{
                   </form>
                   <span className="muted small">{formatPrice(p.price, p.operation)}</span>
                 </td>
-                <td>{p.views}</td><td>{p.wa_clicks}</td>
-                <td>{formatDate(new Date(new Date(p.confirmed_at).getTime() + 90 * 86_400_000))}</td>
+                <td data-label="Visitas">{p.views}</td><td data-label="Clics WhatsApp">{p.wa_clicks}</td>
+                <td data-label="Vence">{formatDate(new Date(new Date(p.confirmed_at).getTime() + 90 * 86_400_000))}</td>
                 <td className="row">
                   {p.verified_at ? (
                     <form action={unverify}><input type="hidden" name="id" value={p.id} /><button className="btn btn-small btn-ghost" title="Quitar el sello">Quitar ✓</button></form>
