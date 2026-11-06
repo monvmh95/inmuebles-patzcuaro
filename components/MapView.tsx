@@ -54,8 +54,22 @@ export default function MapView({ points }: { points: MapPoint[] }) {
         m.bindPopup(box, { minWidth: 200 });
         bounds.push([lat, lng]);
       }
-      if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
-      else if (bounds.length === 1) map.setView(bounds[0], 15);
+      // Vista inicial amplia: siempre se ve todo el pueblo y, si hay anuncios fuera, también ellos. Nunca más cerca que zoom 14.
+      const town: [number, number][] = [[MAP_CENTER[0] - 0.022, MAP_CENTER[1] - 0.03], [MAP_CENTER[0] + 0.022, MAP_CENTER[1] + 0.03]];
+      const all = [...town, ...bounds];
+      const overview = () => map!.fitBounds(all, { padding: [16, 16], maxZoom: 14 });
+      overview();
+      const Reset = L.Control.extend({
+        onAdd() {
+          const btn = L.DomUtil.create("button", "map-reset") as HTMLButtonElement;
+          btn.type = "button";
+          btn.textContent = lang === "en" ? "Whole town" : "Ver todo Pátzcuaro";
+          L.DomEvent.disableClickPropagation(btn);
+          btn.onclick = overview;
+          return btn;
+        },
+      });
+      new Reset({ position: "topright" }).addTo(map);
     })();
     return () => { cancelled = true; map?.remove(); };
   }, [points, lang]);

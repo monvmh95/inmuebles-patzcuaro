@@ -403,3 +403,5 @@ html, body { overflow-x: clip; }
 .gallery-slide { position: relative; width: 100%; min-width: 100%; height: 100%; overflow: hidden; }
 .gallery-slide img, .gallery-main img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: 100%; object-fit: cover; }
 .gallery-main { position: relative; }
+.map-reset { background: #fff; color: var(--ink); border: 2px solid rgba(0,0,0,.25); border-radius: 8px; padding: 8px 12px; font: 650 .8rem/1 inherit; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.2); min-height: 36px; }
+.map-reset:hover { background: #f4f4f4; }
