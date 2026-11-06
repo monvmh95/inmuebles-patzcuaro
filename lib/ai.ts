@@ -7,19 +7,35 @@ export const aiEnabled = () => Boolean(process.env.ANTHROPIC_API_KEY);
 
 type Block = { type: "text"; text: string } | { type: "image"; source: { type: "url"; url: string } };
 
-/** Llamada mínima a la API de Anthropic. Lanza error si falla o tarda demasiado. */
+/** Llamada mínima a la API de Anthropic. Lanza error si falla, tarda demasiado o regresa vacío. */
 export async function callClaude(opts: { system: string; content: Block[]; maxTokens: number; timeoutMs?: number }): Promise<string> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("IA no configurada");
-  const res = await fetch(API, {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: AI_MODEL, max_tokens: opts.maxTokens, system: opts.system, messages: [{ role: "user", content: opts.content }] }),
-    signal: AbortSignal.timeout(opts.timeoutMs ?? 20_000),
-  });
-  if (!res.ok) throw new Error(`IA ${res.status}`);
-  const j = (await res.json()) as { content?: { type: string; text?: string }[] };
-  return (j.content ?? []).filter((b) => b.type === "text").map((b) => b.text ?? "").join("").trim();
+  const post = (extra: Record<string, unknown>) =>
+    fetch(API, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({ model: AI_MODEL, max_tokens: opts.maxTokens, system: opts.system, messages: [{ role: "user", content: opts.content }], ...extra }),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 20_000),
+    });
+  // Sin razonamiento interno: es redacción corta y el razonamiento puede gastar todo el límite de salida y dejar el texto vacío.
+  let res = await post({ thinking: { type: "disabled" } });
+  if (res.status === 400) {
+    const detail = await res.text().catch(() => "");
+    console.error("IA 400 con thinking desactivado, reintento sin ese parámetro:", detail.slice(0, 400));
+    res = await post({});
+  }
+  if (!res.ok) {
+    console.error("IA error", res.status, (await res.text().catch(() => "")).slice(0, 400));
+    throw new Error(`IA ${res.status}`);
+  }
+  const j = (await res.json()) as { content?: { type: string; text?: string }[]; stop_reason?: string; usage?: unknown };
+  const text = (j.content ?? []).filter((b) => b.type === "text").map((b) => b.text ?? "").join("").trim();
+  if (!text) {
+    console.error("IA respuesta sin texto:", JSON.stringify({ model: AI_MODEL, stop_reason: j.stop_reason, blocks: (j.content ?? []).map((b) => b.type), usage: j.usage }));
+    throw new Error("IA vacía");
+  }
+  return text;
 }
 
 /** Extrae el primer objeto JSON de una respuesta de texto. */
