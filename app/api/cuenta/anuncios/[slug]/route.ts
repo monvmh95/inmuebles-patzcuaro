@@ -28,7 +28,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
   if (!phone) return NextResponse.json({ error: "El WhatsApp debe tener 10 dígitos (ej. 434 123 4567)." }, { status: 400 });
   const r = await query(
     `UPDATE properties SET title=$3, description=$4, price=$5, whatsapp=$6, edited_at=now(),
-            status = CASE WHEN status='rejected' THEN 'pending' ELSE status END
+            status = CASE WHEN status='rejected' OR (status='approved' AND (title <> $3 OR description <> $4 OR whatsapp <> $6)) THEN 'pending' ELSE status END
       WHERE slug=$1 AND email_norm=$2 AND status <> 'archived' RETURNING id`,
     [slug, s.email_norm, d.title, d.description, d.price, phone],
   );

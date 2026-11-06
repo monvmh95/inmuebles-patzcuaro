@@ -54,6 +54,21 @@ export async function verifyCode(emailNorm: string, code: string): Promise<boole
   return true;
 }
 
+/** Cuenta un intento de verificación del código SMS (máx. 5 por código pedido). false = bloqueado: hay que pedir un código nuevo. */
+export async function noteVerifyAttempt(key: string): Promise<boolean> {
+  const r = await query<{ id: number }>(
+    `UPDATE email_codes SET attempts = attempts + 1
+      WHERE id = (SELECT id FROM email_codes WHERE email_norm = $1 AND code_hash = 'otp' AND NOT used AND expires_at > now() ORDER BY id DESC LIMIT 1)
+        AND attempts < 5 RETURNING id`,
+    [key],
+  );
+  return r.length > 0;
+}
+/** El código SMS ya se usó: no se puede volver a intentar con él. */
+export async function closeOtp(key: string): Promise<void> {
+  await query(`UPDATE email_codes SET used = true WHERE email_norm = $1 AND code_hash = 'otp' AND NOT used`, [key]).catch(() => {});
+}
+
 /** Clave de identidad: correo normalizado, o "tel:<10 dígitos>" cuando se confirmó por SMS. */
 export const identKey = (kind: "email" | "sms", v: string) => (kind === "sms" ? `tel:${v}` : normalizeEmail(v));
 export const isTelKey = (k: string) => k.startsWith("tel:");

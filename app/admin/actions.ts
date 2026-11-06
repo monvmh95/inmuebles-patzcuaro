@@ -1,5 +1,7 @@
 "use server";
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { sha256 } from "@/lib/util";
 import { after } from "next/server";
 import { prewarmTranslations } from "@/lib/ai";
 import { redirect } from "next/navigation";
@@ -25,9 +27,17 @@ function refresh() {
 }
 
 export async function login(fd: FormData) {
-  // pequeña pausa para frenar fuerza bruta casual
   await new Promise((r) => setTimeout(r, 700));
+  const h = await headers();
+  const ip = sha256(`${h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown"}|${process.env.SESSION_SECRET || "inm"}`);
+  // Freno a la fuerza bruta: 5 fallos por IP cada 15 minutos (sin tope global, para que nadie pueda dejarte fuera a propósito).
+  const [{ mine, all }] = await query<{ mine: number; all: number }>(
+    `SELECT COUNT(*) FILTER (WHERE ip_hash = $1 AND created_at > now() - interval '15 minutes')::int AS mine, COUNT(*)::int AS all FROM admin_fails WHERE created_at > now() - interval '1 hour'`,
+    [ip],
+  ).catch(() => [{ mine: 0, all: 0 }]);
+  if (mine >= 5) redirect("/admin?acceso=bloqueado");
   if (checkPassword(String(fd.get("password") ?? ""))) await setAdminCookie();
+  else await query(`INSERT INTO admin_fails (ip_hash) VALUES ($1)`, [ip]).catch(() => {});
   redirect("/admin");
 }
 export async function logout() {

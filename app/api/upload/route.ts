@@ -7,6 +7,7 @@ import { randomId } from "@/lib/util";
 export const runtime = "nodejs";
 const MAX_BYTES = 4 * 1024 * 1024; // límite de cuerpo de funciones en Vercel ~4.5 MB
 const MAX_PER_HOUR = 40;
+const MAX_PER_DAY_ALL = 1500; // tope global: nadie debe poder llenar el almacenamiento con muchas IPs
 
 function sniff(buf: Uint8Array): "image/jpeg" | "image/png" | "image/webp" | null {
   if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
@@ -24,6 +25,8 @@ export async function POST(req: Request) {
     `SELECT COUNT(*)::int AS n FROM uploads_log WHERE ip_hash = $1 AND created_at > now() - interval '1 hour'`,
     [ip],
   );
+  const [{ d }] = await query<{ d: number }>(`SELECT COUNT(*)::int AS d FROM uploads_log WHERE created_at > now() - interval '24 hours'`);
+  if (d >= MAX_PER_DAY_ALL) return NextResponse.json({ error: "Hoy se alcanzó el límite de fotos. Intenta mañana." }, { status: 429 });
   if (n >= MAX_PER_HOUR) return NextResponse.json({ error: "Demasiadas fotos en poco tiempo. Intenta más tarde." }, { status: 429 });
 
   const form = await req.formData().catch(() => null);

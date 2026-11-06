@@ -135,6 +135,13 @@ const SCHEMA = [
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
   )`,
   `CREATE INDEX IF NOT EXISTS idx_uploads_ip ON uploads_log (ip_hash, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_uploads_day ON uploads_log (created_at)`,
+  `CREATE TABLE IF NOT EXISTS admin_fails (
+    id         BIGSERIAL PRIMARY KEY,
+    ip_hash    TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_admin_fails_ip ON admin_fails (ip_hash, created_at)`,
   // Fase 2 (Rey del dia). Las tablas existen desde hoy; el flujo de cobro se activa con ENABLE_KING.
   `CREATE TABLE IF NOT EXISTS king_slots (
     id          BIGSERIAL PRIMARY KEY,

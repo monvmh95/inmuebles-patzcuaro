@@ -18,13 +18,14 @@ type Row = {
   views: number; wa_clicks: number; created_at: string; confirmed_at: string; owner_kind: string;
 };
 
-export default async function Admin({ searchParams }: { searchParams?: Promise<{ borrado?: string; sesion?: string }> }) {
+export default async function Admin({ searchParams }: { searchParams?: Promise<{ borrado?: string; sesion?: string; acceso?: string }> }) {
   const sp = await searchParams;
   const borrado = sp?.borrado;
   if (!adminConfigured()) {
     return (
       <div className="notice">
         <h1>Administración</h1>
+        {sp?.acceso === "bloqueado" && <p className="error" role="alert">Demasiados intentos. Espera 15 minutos.</p>}
         <p>Falta definir la variable <code>ADMIN_PASSWORD</code> en Vercel (Settings → Environment Variables) y volver a desplegar.</p>
       </div>
     );
