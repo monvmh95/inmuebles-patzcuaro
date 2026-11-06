@@ -6,7 +6,7 @@ import { listPublishers, limitFor } from "@/lib/publishers";
 import { formatDate, formatPrice } from "@/lib/util";
 import { saveColonia } from "./actions";
 import { listColoniaContent } from "@/lib/colonias";
-import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport, setPrice, savePublisher, handleSuggestion } from "./actions";
+import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport, setPrice, savePublisher, handleSuggestion, deleteAllListings } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Administración", robots: { index: false, follow: false } };
@@ -18,7 +18,8 @@ type Row = {
   views: number; wa_clicks: number; created_at: string; confirmed_at: string; owner_kind: string;
 };
 
-export default async function Admin() {
+export default async function Admin({ searchParams }: { searchParams?: Promise<{ borrado?: string }> }) {
+  const borrado = (await searchParams)?.borrado;
   if (!adminConfigured()) {
     return (
       <div className="notice">
@@ -216,6 +217,19 @@ export default async function Admin() {
             <label>Nombre<input name="name" required maxLength={60} /></label>
             <label>Texto<textarea name="intro" rows={7} maxLength={4000} /></label>
             <button className="btn btn-small">Guardar</button>
+          </form>
+        </details>
+      </section>
+
+      <section>
+        <h2>Borrar anuncios de prueba</h2>
+        {borrado && <p className="ok" role="status">{borrado === "cancelado" ? "No se borró nada (no escribiste BORRAR)." : `Se borraron ${borrado} anuncios y sus fotos.`}</p>}
+        <details>
+          <summary>Borrar TODOS los anuncios</summary>
+          <form action={deleteAllListings} className="form stack" style={{ maxWidth: 420 }}>
+            <p className="small">Elimina definitivamente todos los anuncios (pendientes, publicados y dados de baja) con sus fotos y reportes. No se puede deshacer. Las cuentas, sesiones y límites de personas se conservan.</p>
+            <label>Escribe BORRAR para confirmar<input name="confirm" autoComplete="off" required /></label>
+            <button className="btn btn-small">Borrar todos los anuncios</button>
           </form>
         </details>
       </section>

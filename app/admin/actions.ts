@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { prewarmTranslations } from "@/lib/ai";
 import { redirect } from "next/navigation";
 import { checkPassword, clearAdminCookie, isAdmin, setAdminCookie } from "@/lib/admin";
+import { del } from "@vercel/blob";
 import { query } from "@/lib/db";
 import { scheduleKing } from "@/lib/king";
 import { randomId, slugify } from "@/lib/util";
@@ -120,4 +121,16 @@ export async function saveColonia(fd: FormData) {
   if (!name || !slug) return;
   await saveColoniaContent(slug, name, intro);
   refresh();
+}
+
+/** Borra TODOS los anuncios (y sus fotos). Pide escribir BORRAR. Conserva cuentas, sesiones, límites y sugerencias. */
+export async function deleteAllListings(fd: FormData) {
+  await guard();
+  if (String(fd.get("confirm") ?? "").trim() !== "BORRAR") redirect("/admin?borrado=cancelado");
+  const rows = await query<{ photos: string[] | null }>(`SELECT photos FROM properties`);
+  const urls = rows.flatMap((r) => r.photos ?? []).filter((u) => typeof u === "string" && u.includes(".public.blob.vercel-storage.com/"));
+  const deleted = await query<{ id: number }>(`DELETE FROM properties RETURNING id`);
+  for (let i = 0; i < urls.length; i += 100) await del(urls.slice(i, i + 100)).catch((e) => console.error("blob del:", e));
+  refresh();
+  redirect(`/admin?borrado=${deleted.length}`);
 }
