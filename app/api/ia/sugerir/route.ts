@@ -3,6 +3,7 @@ import { z } from "zod";
 import { aiAllowed, aiEnabled, callClaude, parseJsonObject } from "@/lib/ai";
 import { OPERATIONS, TYPES } from "@/lib/config";
 import { clientIpHash } from "@/lib/request";
+import { parseLand } from "@/lib/measures";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -12,7 +13,7 @@ const schema = z.object({
   operation: z.enum(Object.keys(OPERATIONS) as [string, ...string[]]),
   type: z.enum(Object.keys(TYPES) as [string, ...string[]]),
   colonia: z.string().trim().max(60).optional().default(""),
-  price: num, bedrooms: num, bathrooms: num, land_m2: num, built_m2: num,
+  price: num, bedrooms: num, bathrooms: num, land_m2: num, land_dims: z.string().trim().max(30).optional(), built_m2: num,
   lake_view: z.boolean().optional(),
   title: z.string().trim().max(120).optional().default(""),
   notes: z.string().trim().max(1500).optional().default(""),
@@ -40,13 +41,14 @@ export async function POST(req: Request) {
   const d = parsed.data;
   if (!(await aiAllowed(clientIpHash(req)))) return NextResponse.json({ error: "Usaste el asistente varias veces seguidas. Intenta más tarde." }, { status: 429 });
 
+  const land = d.land_dims ? parseLand(d.land_dims) : d.land_m2 != null ? { m2: d.land_m2, dims: null } : null;
   const facts = [
     `Operación: ${OPERATIONS[d.operation as keyof typeof OPERATIONS].label}`,
     `Tipo: ${TYPES[d.type as keyof typeof TYPES].label}`,
     d.colonia && `Colonia o zona: ${d.colonia}`,
     d.bedrooms != null && `Recámaras: ${d.bedrooms}`,
     d.bathrooms != null && `Baños: ${d.bathrooms}`,
-    d.land_m2 != null && `Terreno: ${d.land_m2} m²`,
+    land && `Terreno: ${land.m2} m²${land.dims ? ` (${land.dims} m, frente por fondo)` : ""}`,
     d.built_m2 != null && `Construcción: ${d.built_m2} m²`,
     d.lake_view && "Tiene vista al lago",
     d.title && `Título actual: ${d.title}`,

@@ -17,6 +17,7 @@ export type Property = {
   bedrooms: number | null;
   bathrooms: number | null;
   land_m2: number | null;
+  land_dims?: string | null;
   built_m2: number | null;
   owner_kind: "dueno" | "agente";
   whatsapp: string;
@@ -34,7 +35,7 @@ export type Property = {
 };
 
 const PUBLIC_COLS = `id, slug, operation, type, title, description, price, colonia, colonia_slug, bedrooms, bathrooms,
-  land_m2, built_m2, owner_kind, whatsapp, photos, status, views, wa_clicks, created_at, approved_at, confirmed_at, verified_at, lat, lng, lake_view`;
+  land_m2, built_m2, owner_kind, whatsapp, photos, status, views, wa_clicks, created_at, approved_at, confirmed_at, verified_at, lat, lng, lake_view, land_dims`;
 
 export type Filters = {
   operation?: Operation;

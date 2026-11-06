@@ -49,6 +49,7 @@ const SCHEMA = [
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lake_view BOOLEAN NOT NULL DEFAULT false`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS land_dims TEXT`,
   `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check`,
   `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check2`,
   `ALTER TABLE properties ADD CONSTRAINT properties_type_check2 CHECK (type IN ('casa','departamento','terreno','local','cuarto','bodega','huerta'))`,

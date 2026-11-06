@@ -5,6 +5,7 @@ import { opLabel, typeLabel, localizePath } from "@/lib/i18n";
 import { useLang } from "./LangProvider";
 import PropertyCard from "./PropertyCard";
 import LocationPicker from "./LocationPicker";
+import { parseLand } from "@/lib/measures";
 
 async function compress(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file);
@@ -39,6 +40,8 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ manageUrl: string } | null>(null);
+  const [landIn, setLandIn] = useState("");
+  const landParsed = parseLand(landIn);
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [preview, setPreview] = useState<Parameters<typeof PropertyCard>[0]["p"] | null>(null);
 
@@ -65,7 +68,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
       colonia: String(fd.get("colonia") || t("Colonia", "Neighborhood")),
       bedrooms: num(fd.get("bedrooms")),
       bathrooms: num(fd.get("bathrooms")),
-      land_m2: num(fd.get("land_m2")),
+      land_m2: parseLand(fd.get("land_dims"))?.m2 ?? null,
       built_m2: num(fd.get("built_m2")),
       photos,
       verified_at: null,
@@ -98,7 +101,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({
           operation: fd.get("operation"), type: fd.get("type"), colonia: fd.get("colonia"), price: fd.get("price"),
-          bedrooms: fd.get("bedrooms"), bathrooms: fd.get("bathrooms"), land_m2: fd.get("land_m2"), built_m2: fd.get("built_m2"),
+          bedrooms: fd.get("bedrooms"), bathrooms: fd.get("bathrooms"), land_dims: fd.get("land_dims"), built_m2: fd.get("built_m2"),
           lake_view: fd.get("lake_view") === "on", title: fd.get("title"), notes: fd.get("description"), photos: photos.slice(0, 3),
         }),
       });
@@ -155,7 +158,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
     const body = {
       operation: fd.get("operation"), type: fd.get("type"), title: fd.get("title"), description: fd.get("description"),
       price: fd.get("price"), colonia: fd.get("colonia"), bedrooms: fd.get("bedrooms"), bathrooms: fd.get("bathrooms"),
-      land_m2: fd.get("land_m2"), built_m2: fd.get("built_m2"), owner_kind: fd.get("owner_kind"),
+      land_dims: fd.get("land_dims"), built_m2: fd.get("built_m2"), owner_kind: fd.get("owner_kind"),
       whatsapp: fd.get("whatsapp"), email: fd.get("email"), website: fd.get("website"), lang,
       accept: fd.get("accept") === "on", photos,
       lat: geo?.lat ?? null, lng: geo?.lng ?? null, lake_view: fd.get("lake_view") === "on",
@@ -224,7 +227,12 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         <div className="grid4">
           <label>{t("Recámaras", "Bedrooms")}<input name="bedrooms" type="number" min={0} max={30} inputMode="numeric" /></label>
           <label>{t("Baños", "Bathrooms")}<input name="bathrooms" type="number" min={0} max={30} inputMode="numeric" /></label>
-          <label>{t("m² terreno", "Lot m²")}<input name="land_m2" type="number" min={0} inputMode="numeric" /></label>
+          <label>{t("Terreno (ej. 10x21)", "Lot (e.g. 10x21)")}
+            <input name="land_dims" value={landIn} onChange={(e) => { const v = e.target.value; setLandIn(v); e.target.setCustomValidity(v.trim() !== "" && !parseLand(v) ? t("Escríbelo como 10x21 o 210", "Write it as 10x21 or 210") : ""); }} inputMode="text" autoComplete="off" maxLength={30}
+              placeholder="10x21" aria-describedby="land-hint"
+              />
+            <small id="land-hint" className="muted">{landIn.trim() === "" ? t("Frente x fondo en metros, o solo m².", "Width x depth in meters, or just m².") : landParsed ? `= ${landParsed.m2} m²` : t("Escríbelo como 10x21 o 210", "Write it as 10x21 or 210")}</small>
+          </label>
           <label>{t("m² construcción", "Built m²")}<input name="built_m2" type="number" min={0} inputMode="numeric" /></label>
         </div>
       </div>

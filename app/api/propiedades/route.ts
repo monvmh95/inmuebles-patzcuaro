@@ -5,6 +5,7 @@ import { MAX_PHOTOS, OPERATIONS, TYPES, inBounds, roundGeo } from "@/lib/config"
 import { clientIpHash } from "@/lib/request";
 import { newToken, normalizeMxPhone, randomId, slugify } from "@/lib/util";
 import { SITE_URL } from "@/lib/config";
+import { parseLand } from "@/lib/measures";
 
 export const runtime = "nodejs";
 
@@ -21,6 +22,7 @@ const schema = z.object({
   bedrooms: num(30),
   bathrooms: num(30),
   land_m2: num(1_000_000),
+  land_dims: z.string().trim().max(30).optional(),
   built_m2: num(100_000),
   lat: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().finite().nullable()).optional(),
   lng: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().finite().nullable()).optional(),
@@ -66,15 +68,23 @@ export async function POST(req: Request) {
     lat = roundGeo(d.lat); lng = roundGeo(d.lng);
   }
 
+  // El terreno puede venir como "10x21" (frente x fondo) o como m² directos.
+  let landM2 = d.land_m2, landDims: string | null = null;
+  if (d.land_dims) {
+    const land = parseLand(d.land_dims);
+    if (!land) return NextResponse.json({ error: "El terreno debe escribirse como 10x21 o como metros cuadrados (ej. 210)." }, { status: 400 });
+    landM2 = land.m2; landDims = land.dims;
+  }
+
   const { token, hash } = newToken();
   const slug = `${slugify(d.title) || "propiedad"}-${randomId(3)}`;
   await query(
     `INSERT INTO properties (slug, token_hash, operation, type, title, description, price, colonia, colonia_slug,
-        bedrooms, bathrooms, land_m2, built_m2, owner_kind, whatsapp, email, photos, ip_hash, lat, lng, lake_view)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19::float8,$20::float8,$21::boolean)`,
+        bedrooms, bathrooms, land_m2, built_m2, owner_kind, whatsapp, email, photos, ip_hash, lat, lng, lake_view, land_dims)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19::float8,$20::float8,$21::boolean,$22)`,
     [
       slug, hash, d.operation, d.type, d.title, d.description, d.price, d.colonia, slugify(d.colonia) || "centro",
-      d.bedrooms, d.bathrooms, d.land_m2, d.built_m2, d.owner_kind, phone, d.email || null, JSON.stringify(d.photos), ip, lat, lng, d.lake_view === true,
+      d.bedrooms, d.bathrooms, landM2, d.built_m2, d.owner_kind, phone, d.email || null, JSON.stringify(d.photos), ip, lat, lng, d.lake_view === true, landDims,
     ],
   );
   return NextResponse.json({ ok: true, manageUrl: `${SITE_URL}/mi-anuncio/${token}`, manageToken: token });

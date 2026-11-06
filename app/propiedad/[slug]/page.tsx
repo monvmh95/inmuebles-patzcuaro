@@ -105,7 +105,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
               {p.bedrooms != null && <li><b>{p.bedrooms}</b>{t("Recámaras", "Bedrooms")}</li>}
               {p.bathrooms != null && <li><b>{p.bathrooms}</b>{t("Baños", "Bathrooms")}</li>}
               {p.built_m2 != null && <li><b>{p.built_m2} m²</b>{t("Construcción", "Built area")}</li>}
-              {p.land_m2 != null && <li><b>{p.land_m2} m²</b>{t("Terreno", "Lot size")}</li>}
+              {p.land_m2 != null && <li><b>{p.land_m2} m²</b>{t("Terreno", "Lot size")}{p.land_dims ? <small> ({p.land_dims} m)</small> : null}</li>}
               <li><b>{p.colonia}</b>{t("Zona", "Area")}</li>
               <li><b>{p.owner_kind === "dueno" ? t("Dueño directo", "Direct owner") : t("Agente", "Agent")}</b>{t("Publica", "Posted by")}</li>
             </ul>
