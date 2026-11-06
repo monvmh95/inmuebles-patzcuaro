@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { query } from "@/lib/db";
-import { MAX_PHOTOS, OPERATIONS, TYPES, inBounds, roundGeo } from "@/lib/config";
+import { MAX_PHOTOS, OPERATIONS, TYPES, inBounds, roundGeo, typesForOp } from "@/lib/config";
 import { clientIpHash } from "@/lib/request";
 import { newToken, normalizeEmail, normalizeMxPhone, randomId, slugify } from "@/lib/util";
 import { SITE_URL } from "@/lib/config";
 import { parseLand } from "@/lib/measures";
-import { FEATURE_KEYS, cleanFeatures } from "@/lib/features";
+import { FEATURE_KEYS, cleanCustom, cleanFeatures } from "@/lib/features";
 import { checkPublisher } from "@/lib/publishers";
 import { getSession, isTelKey } from "@/lib/account";
 import { smsEnabled } from "@/lib/sms";
@@ -30,6 +30,13 @@ const schema = z.object({
   land_dims: z.string().trim().max(30).optional(),
   features: z.array(z.enum(FEATURE_KEYS)).max(30).optional(),
   built_m2: num(100_000),
+  custom_features: z.array(z.string().max(60)).max(20).optional(),
+  max_guests: num(200),
+  beds: num(100),
+  min_nights: num(60),
+  checkin: z.string().trim().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().or(z.literal("")),
+  checkout: z.string().trim().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().or(z.literal("")),
+  house_rules: z.string().trim().max(500).optional(),
   lat: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().finite().nullable()).optional(),
   lng: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().finite().nullable()).optional(),
   lake_view: z.boolean().optional(),
@@ -91,9 +98,11 @@ export async function POST(req: Request) {
   );
   if (n >= MAX_PER_HOUR) return NextResponse.json({ error: "Has publicado varias veces seguidas. Intenta más tarde." }, { status: 429 });
 
-  if (d.operation !== "renta" && d.operation !== "venta" && d.operation !== "traspaso") {
-    return NextResponse.json({ error: "Operación inválida" }, { status: 400 });
+  if (!typesForOp(d.operation).includes(d.type as never)) {
+    return NextResponse.json({ error: d.operation === "hospedaje" ? "Ese tipo no aplica para hospedaje." : "Ese tipo solo aplica para hospedaje." }, { status: 400 });
   }
+  const lodging = d.operation === "hospedaje";
+  if (lodging && !d.max_guests) return NextResponse.json({ error: "Indica cuántas personas caben como máximo." }, { status: 400 });
 
   let lat: number | null = null, lng: number | null = null;
   if (d.lat != null && d.lng != null) {
@@ -113,11 +122,14 @@ export async function POST(req: Request) {
   const slug = `${slugify(d.title) || "propiedad"}-${randomId(3)}`;
   await query(
     `INSERT INTO properties (slug, token_hash, operation, type, title, description, price, colonia, colonia_slug,
-        bedrooms, bathrooms, land_m2, built_m2, owner_kind, whatsapp, email, photos, ip_hash, lat, lng, lake_view, land_dims, features, email_norm)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19::float8,$20::float8,$21::boolean,$22,$23::jsonb,$24)`,
+        bedrooms, bathrooms, land_m2, built_m2, owner_kind, whatsapp, email, photos, ip_hash, lat, lng, lake_view, land_dims, features, email_norm,
+        max_guests, beds, min_nights, checkin, checkout, house_rules, custom_features)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19::float8,$20::float8,$21::boolean,$22,$23::jsonb,$24,$25,$26,$27,$28,$29,$30,$31::jsonb)`,
     [
       slug, hash, d.operation, d.type, d.title, d.description, d.price, d.colonia, slugify(d.colonia) || "centro",
       d.bedrooms, d.bathrooms, landM2, d.built_m2, d.owner_kind, phone, email, JSON.stringify(d.photos), ip, lat, lng, d.lake_view === true, landDims, JSON.stringify(cleanFeatures(d.features)), emailNorm,
+      lodging ? d.max_guests : null, lodging ? d.beds : null, lodging ? d.min_nights : null, lodging ? d.checkin || null : null, lodging ? d.checkout || null : null,
+      lodging ? d.house_rules || null : null, JSON.stringify(cleanCustom(d.custom_features)),
     ],
   );
   if (session) await query(`UPDATE accounts SET whatsapp = $2, owner_kind = $3 WHERE email_norm = $1`, [session.email_norm, phone, d.owner_kind]).catch(() => {});

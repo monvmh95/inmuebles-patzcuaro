@@ -1,13 +1,14 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Calendar from "./Calendar";
 
 export type MyItem = {
   slug: string; title: string; description: string; price: number | null; whatsapp: string; status: string; operation: string;
-  views: number; wa_clicks: number; photo: string | null; expires: string; edited: boolean;
+  views: number; wa_clicks: number; photo: string | null; expires: string; edited: boolean; blocked: string[];
 };
 const STATUS: Record<string, string> = { pending: "En revisión", approved: "Publicado", rejected: "No aprobado", archived: "Dado de baja" };
-const money = (n: number | null, op: string) => (n == null ? "Precio a tratar" : `$${n.toLocaleString("en-US")} MXN${op === "renta" ? " /mes" : ""}`);
+const money = (n: number | null, op: string) => (n == null ? "Precio a tratar" : `$${n.toLocaleString("en-US")} MXN${op === "renta" ? " /mes" : op === "hospedaje" ? " /noche" : ""}`);
 
 function Card({ it }: { it: MyItem }) {
   const router = useRouter();
@@ -47,6 +48,19 @@ function Card({ it }: { it: MyItem }) {
     }
     setMsg("Enlace copiado. Pégalo en tu publicación de Facebook o donde quieras.");
   }
+  const [calOpen, setCalOpen] = useState(false);
+  const [calBlocked, setCalBlocked] = useState<string[]>(it.blocked ?? []);
+  const [calSaved, setCalSaved] = useState<string[]>(it.blocked ?? []);
+  async function saveCalendar() {
+    const cur = new Set(calBlocked), prev = new Set(calSaved);
+    const block = calBlocked.filter((d) => !prev.has(d)), unblock = calSaved.filter((d) => !cur.has(d));
+    setBusy(true); setMsg("");
+    const res = await fetch(`/api/cuenta/anuncios/${it.slug}/calendario`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ block, unblock }) });
+    const j = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) return setMsg(j.error || "No se pudo guardar el calendario.");
+    setCalBlocked(j.blocked); setCalSaved(j.blocked); setMsg("Calendario guardado. Los huéspedes ya ven tus fechas ocupadas.");
+  }
   const live = it.status === "approved" || it.status === "pending";
 
   return (
@@ -71,9 +85,18 @@ function Card({ it }: { it: MyItem }) {
         {it.status === "approved" && <button className="btn btn-small" onClick={copyLink}>Copiar enlace para compartir</button>}
         {it.status === "approved" && <a className="btn btn-small btn-ghost" href={`/propiedad/${it.slug}`}>Ver anuncio</a>}
         {live && <button className="btn btn-small" disabled={busy} onClick={() => act("renew")}>Sigue disponible</button>}
+        {it.operation === "hospedaje" && it.status !== "archived" && <button className="btn btn-small btn-ghost" disabled={busy} onClick={() => setCalOpen((v) => !v)}>{calOpen ? "Cerrar calendario" : "Calendario"}</button>}
         {it.status !== "archived" && <button className="btn btn-small btn-ghost" disabled={busy} onClick={() => setEditing((v) => !v)}>{editing ? "Cerrar" : "Editar"}</button>}
         {live && <button className="btn btn-small btn-ghost" disabled={busy} onClick={() => act("archive")}>Ya se rentó / vendió</button>}
       </div>
+      {calOpen && (
+        <div className="stack">
+          <p className="muted small" style={{ margin: 0 }}>Marca las noches en que ya no tienes lugar. Los visitantes verán esas fechas como ocupadas.</p>
+          <Calendar mode="edit" blocked={calBlocked} onChange={setCalBlocked} />
+          <div className="row"><button className="btn btn-small" disabled={busy} onClick={saveCalendar}>{busy ? "Guardando…" : "Guardar calendario"}</button>
+            {JSON.stringify(calBlocked) !== JSON.stringify(calSaved) && <span className="muted small">Hay cambios sin guardar.</span>}</div>
+        </div>
+      )}
       {editing && (
         <form onSubmit={save} className="form stack my-edit">
           <label>Título<input value={title} onChange={(e) => setTitle(e.target.value)} minLength={8} maxLength={90} required /></label>

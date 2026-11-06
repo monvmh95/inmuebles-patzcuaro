@@ -10,6 +10,7 @@ import Gallery from "@/components/Gallery";
 import ShareButtons from "@/components/ShareButtons";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import ZoneMap from "@/components/ZoneMap";
+import LodgingBooking from "@/components/LodgingBooking";
 import FavoriteButton from "@/components/FavoriteButton";
 import { CITY, SITE_URL, TYPES } from "@/lib/config";
 import { getLang, tf, opLabel, typeLabel, typePlural } from "@/lib/lang";
@@ -18,7 +19,7 @@ import { alternatesFor } from "@/lib/alternates";
 import { translateText, localizeTitles } from "@/lib/ai";
 import { query } from "@/lib/db";
 import { featureLabel } from "@/lib/features";
-import { getBySlug, listProperties } from "@/lib/properties";
+import { getBlockedDates, getBySlug, listProperties } from "@/lib/properties";
 import { breadcrumbJsonLd, JsonLd, propertyJsonLd, propertyTitle } from "@/lib/seo";
 import { safe } from "@/lib/safe";
 import { formatDate, formatPrice, isBot, pricePerM2, timeAgo, whatsappUrl } from "@/lib/util";
@@ -59,6 +60,8 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
   const similar = await localizeTitles((await safe(() => listProperties({ operation: p.operation, colonia_slug: p.colonia_slug, limit: 4 }), [])).filter((x) => x.id !== p.id).slice(0, 3), lang);
   const wa = whatsappUrl(p.whatsapp, `Hola, vi tu anuncio "${p.title}" en Inmuebles Pátzcuaro y me interesa. ¿Sigue disponible?${lang === "en" ? " (Message sent from the English site; I may write in English.)" : ""}`);
   const typeSlug = TYPES[p.type].slug;
+  const lodging = p.operation === "hospedaje";
+  const blocked = lodging ? await safe(() => getBlockedDates(p.id), []) : [];
 
   return (
     <>
@@ -83,12 +86,19 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
           </div>
           <p className="muted">{propertyTitle(p, lang)}</p>
           <div className="prose">{tx.description}</div>
-          {(p.features ?? []).length > 0 && (
+          {((p.features ?? []).length > 0 || (p.custom_features ?? []).length > 0) && (
             <>
               <h2 className="h3" style={{ marginTop: 22 }}>{t("Características", "Features")}</h2>
               <ul className="prop-feats">
                 {(p.features ?? []).map((k) => { const l = featureLabel(k, lang); return l ? <li key={k}>{l}</li> : null; })}
+                {(p.custom_features ?? []).map((c) => <li key={`c-${c}`}>{c}</li>)}
               </ul>
+            </>
+          )}
+          {lodging && p.house_rules && (
+            <>
+              <h2 className="h3" style={{ marginTop: 22 }}>{t("Reglas y políticas", "House rules and policies")}</h2>
+              <div className="prose">{p.house_rules}</div>
             </>
           )}
           {lang === "en" && <p className="muted small">{machine ? "Automatic English translation of the listing written in Spanish by the owner or agent. Check details when you contact them." : "This listing was written in Spanish by the owner or agent. Automatic translation is not available for it right now."}</p>}
@@ -113,6 +123,11 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
             <ul className="facts">
               <li><b>{typeLabel(lang, p.type)}</b>{t("Tipo", "Type")}</li>
               <li><b>{opLabel(lang, p.operation)}</b>{t("Operación", "Operation")}</li>
+              {lodging && p.max_guests != null && <li><b>{p.max_guests}</b>{t("Huéspedes (máx.)", "Guests (max)")}</li>}
+              {lodging && p.beds != null && <li><b>{p.beds}</b>{t("Camas", "Beds")}</li>}
+              {lodging && p.min_nights != null && <li><b>{p.min_nights}</b>{t("Noches mínimas", "Minimum nights")}</li>}
+              {lodging && p.checkin && <li><b>{p.checkin}</b>{t("Entrada desde", "Check-in from")}</li>}
+              {lodging && p.checkout && <li><b>{p.checkout}</b>{t("Salida hasta", "Check-out by")}</li>}
               {p.bedrooms != null && <li><b>{p.bedrooms}</b>{t("Recámaras", "Bedrooms")}</li>}
               {p.bathrooms != null && <li><b>{p.bathrooms}</b>{t("Baños", "Bathrooms")}</li>}
               {p.built_m2 != null && <li><b>{p.built_m2} m²</b>{t("Construcción", "Built area")}</li>}
@@ -120,9 +135,13 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
               <li><b>{p.colonia}</b>{t("Zona", "Area")}</li>
               <li><b>{p.owner_kind === "dueno" ? t("Dueño directo", "Direct owner") : t("Agente", "Agent")}</b>{t("Publica", "Posted by")}</li>
             </ul>
-            <WhatsAppButton slug={p.slug} href={wa} />
+            {lodging
+              ? <LodgingBooking slug={p.slug} title={tx.title} phone={p.whatsapp} blocked={blocked} maxGuests={p.max_guests ?? null} minNights={p.min_nights ?? null} lang={lang} />
+              : <WhatsAppButton slug={p.slug} href={wa} />}
             <div className="tip">
-              <strong>{t("Antes de pagar:", "Before paying:")}</strong> {t("visita la propiedad, confirma que quien te la muestra es el dueño o su representante y no hagas anticipos a desconocidos.", "visit the property, confirm that the person showing it is the owner or their representative, and do not send deposits to strangers.")}{" "}
+              <strong>{t("Antes de pagar:", "Before paying:")}</strong> {lodging
+                ? t("confirma por llamada o videollamada que el lugar existe y que quien te atiende es el anfitrión, revisa fotos recientes y no hagas anticipos a desconocidos. Acuerda por escrito precio, fechas y política de cancelación.", "confirm by call or video call that the place exists and that the person answering is the host, check recent photos, and do not send deposits to strangers. Agree on price, dates and the cancellation policy in writing.")
+                : t("visita la propiedad, confirma que quien te la muestra es el dueño o su representante y no hagas anticipos a desconocidos.", "visit the property, confirm that the person showing it is the owner or their representative, and do not send deposits to strangers.")}{" "}
               <L href="/guias/como-evitar-fraudes-al-rentar">{t("Ver guía", "Read the guide")}</L>
             </div>
             <div className="share"><ShareButtons url={`${SITE_URL}${localizePath(lang, `/propiedad/${p.slug}`)}`} title={tx.title} /></div>

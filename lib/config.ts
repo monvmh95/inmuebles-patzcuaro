@@ -13,6 +13,7 @@ export const OPERATIONS = {
   renta: { label: "Renta", plural: "en renta" },
   venta: { label: "Venta", plural: "en venta" },
   traspaso: { label: "Traspaso", plural: "en traspaso" },
+  hospedaje: { label: "Hospedaje", plural: "de hospedaje" },
 } as const;
 export type Operation = keyof typeof OPERATIONS;
 
@@ -24,8 +25,19 @@ export const TYPES = {
   cuarto: { label: "Cuarto", slug: "cuartos", plural: "Cuartos" },
   bodega: { label: "Bodega", slug: "bodegas", plural: "Bodegas" },
   huerta: { label: "Huerta", slug: "huertas", plural: "Huertas" },
+  hotel: { label: "Hotel", slug: "hoteles", plural: "Hoteles" },
+  posada: { label: "Posada", slug: "posadas", plural: "Posadas" },
+  cabana: { label: "Cabaña", slug: "cabanas", plural: "Cabañas" },
+  hostal: { label: "Hostal", slug: "hostales", plural: "Hostales" },
+  glamping: { label: "Glamping", slug: "glamping", plural: "Glamping" },
 } as const;
 export type PropType = keyof typeof TYPES;
+
+/** Tipos que se pueden elegir según la operación: el hospedaje usa su propia lista. */
+export const LODGING_TYPES: PropType[] = ["hotel", "posada", "cabana", "hostal", "glamping", "casa", "departamento", "cuarto"];
+export const NORMAL_TYPES: PropType[] = ["casa", "departamento", "terreno", "local", "cuarto", "bodega", "huerta"];
+export const typesForOp = (op?: string): PropType[] => (op === "hospedaje" ? LODGING_TYPES : op ? NORMAL_TYPES : (Object.keys(TYPES) as PropType[]));
+export const isLodging = (op?: string | null) => op === "hospedaje";
 
 export function typeFromSlug(slug: string): PropType | null {
   const hit = (Object.keys(TYPES) as PropType[]).find((k) => TYPES[k].slug === slug);

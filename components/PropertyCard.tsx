@@ -8,7 +8,7 @@ import FavoriteButton from "./FavoriteButton";
 
 type CardProps = {
   p: Pick<Property, "operation" | "type" | "title" | "price" | "colonia" | "bedrooms" | "bathrooms" | "built_m2" | "land_m2" | "photos" | "verified_at"> &
-    Partial<Pick<Property, "slug" | "approved_at" | "created_at" | "confirmed_at" | "lake_view">>;
+    Partial<Pick<Property, "slug" | "approved_at" | "created_at" | "confirmed_at" | "lake_view" | "max_guests" | "beds">>;
   featured?: boolean;
   /** Vista previa dentro del formulario: no es un enlace. */
   preview?: boolean;
@@ -42,6 +42,8 @@ export default function PropertyCard({ p, featured = false, preview = false, lan
         <h3 className="card-title">{p.title}</h3>
         <p className="card-meta">{typeLabel(lang, p.type)} · {p.colonia}</p>
         <p className="card-facts">
+          {p.operation === "hospedaje" && p.max_guests != null && <span>{en ? `up to ${p.max_guests} guests` : `hasta ${p.max_guests} personas`}</span>}
+          {p.operation === "hospedaje" && p.beds != null && <span>{p.beds} {en ? "beds" : "camas"}</span>}
           {p.bedrooms != null && <span>{p.bedrooms} {en ? "bd" : "rec."}</span>}
           {p.bathrooms != null && <span>{p.bathrooms} {en ? "ba" : "baños"}</span>}
           {p.built_m2 != null && <span>{p.built_m2} m² {en ? "built" : "const."}</span>}

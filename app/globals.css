@@ -309,3 +309,32 @@ a.verified:hover { background: #eef6f3; color: var(--accent); }
 .my-approved { color: var(--accent); border-color: var(--accent); } .my-rejected { color: var(--danger); border-color: var(--danger); }
 .my-stats { grid-template-columns: repeat(2, 1fr); } .my-stats .stat b { font-size: 1.3rem; }
 .my-edit { border-top: 1px dashed var(--line); padding-top: 12px; }
+
+/* Calendario de hospedaje */
+.cal { max-width: 360px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--surface); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; text-transform: capitalize; }
+.cal-nav { border: 1px solid var(--line); background: transparent; border-radius: 8px; width: 34px; height: 34px; font-size: 1.2rem; cursor: pointer; color: inherit; }
+.cal-nav:disabled { opacity: .35; cursor: default; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-dow { text-align: center; font-size: .75rem; color: var(--muted, #7a6d68); padding: 2px 0; }
+.cal-day { aspect-ratio: 1; border: 1px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; font: inherit; color: inherit; padding: 0; min-height: 36px; }
+.cal-day:hover:not(:disabled) { border-color: var(--brand); }
+.cal-day.is-past { opacity: .3; cursor: default; }
+.cal-day.is-blocked { background: #e9d3cd; color: #7a2e1b; text-decoration: line-through; }
+.cal-day.is-today { border-color: var(--line); font-weight: 700; }
+.cal-day.is-in-range { background: #f3e4d3; }
+.cal-day.is-sel { background: var(--brand); color: #fff; border-color: var(--brand); text-decoration: none; }
+.cal-day:disabled { cursor: default; }
+.cal-legend { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.cal-key { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line); vertical-align: -1px; }
+.cal-key-busy { background: #e9d3cd; }
+.book-box { display: grid; gap: 10px; margin: 12px 0; }
+.book-status { margin: 0; font-weight: 600; }
+.book-status.ok { color: #1f6b3a; }
+.book-status.bad { color: #a23a1f; }
+.cf-row { display: flex; gap: 6px; }
+.cf-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.cf-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 6px 4px 12px; background: var(--surface); font-size: .9rem; }
+.cf-chip button { border: 0; background: transparent; cursor: pointer; font-size: 1rem; line-height: 1; color: inherit; }
+.book-box label { display: grid; gap: 4px; }
+.book-box select { max-width: 140px; }

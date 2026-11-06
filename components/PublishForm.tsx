@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { MAX_PHOTOS, OPERATIONS, TYPES, type Operation, type PropType } from "@/lib/config";
+import { MAX_PHOTOS, OPERATIONS, typesForOp, type Operation, type PropType } from "@/lib/config";
 import { opLabel, typeLabel, localizePath } from "@/lib/i18n";
 import { useLang } from "./LangProvider";
 import PropertyCard from "./PropertyCard";
@@ -111,6 +111,9 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
   const priceWords = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toLocaleString(en ? "en-US" : "es-MX", { maximumFractionDigits: 2 })} ${t("millones de pesos", "million pesos")}` : n >= 1000 ? `${Math.round(n / 1000).toLocaleString(en ? "en-US" : "es-MX")} ${t("mil pesos", "thousand pesos")}` : `${n} ${t("pesos", "pesos")}`);
   const priceWarn = (n: number | null) => {
     if (n == null || n === 0) return "";
+    if (opSel === "hospedaje" && n > 30_000) return t("Es un precio por noche muy alto. ¿Seguro que es por noche?", "That is a very high nightly price. Is it really per night?");
+    if (opSel === "hospedaje" && n < 100) return t("Parece muy bajo para una noche. Revisa los ceros.", "That looks very low for a night. Check the zeros.");
+    if (opSel === "hospedaje") return "";
     if (opSel === "renta" && n > 300_000) return t("Es un precio mensual muy alto. ¿Seguro que es por mes?", "That is a very high monthly price. Is it really per month?");
     if (opSel !== "renta" && n < 20_000) return t("Parece muy bajo para una venta o traspaso. Revisa los ceros.", "That looks very low for a sale or transfer. Check the zeros.");
     if (n > 150_000_000) return t("Parece demasiado alto. Revisa los ceros.", "That looks too high. Check the zeros.");
@@ -120,6 +123,14 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
   const [opSel, setOpSel] = useState<string>("renta");
   const [typeSel, setTypeSel] = useState<string>("casa");
   const [feat, setFeat] = useState<string[]>([]);
+  const [custom, setCustom] = useState<string[]>([]);
+  const [customIn, setCustomIn] = useState("");
+  const lodging = opSel === "hospedaje";
+  function addCustom() {
+    const v = customIn.replace(/\s+/g, " ").trim().slice(0, 40);
+    if (v.length >= 2 && custom.length < 12 && !custom.some((c) => c.toLowerCase() === v.toLowerCase())) setCustom((c) => [...c, v]);
+    setCustomIn("");
+  }
   const avail = featuresFor(typeSel, opSel);
   const chosen = () => feat.filter((k) => avail.some((f) => f.key === k));
   const landParsed = parseLand(landIn);
@@ -151,6 +162,8 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
       bathrooms: num(fd.get("bathrooms")),
       land_m2: parseLand(fd.get("land_dims"))?.m2 ?? null,
       built_m2: num(fd.get("built_m2")),
+      max_guests: num(fd.get("max_guests")),
+      beds: num(fd.get("beds")),
       photos,
       verified_at: null,
       lake_view: fd.get("lake_view") === "on",
@@ -183,7 +196,8 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         body: JSON.stringify({
           operation: fd.get("operation"), type: fd.get("type"), colonia: fd.get("colonia"), price: fd.get("price"),
           bedrooms: fd.get("bedrooms"), bathrooms: fd.get("bathrooms"), land_dims: fd.get("land_dims"), built_m2: fd.get("built_m2"),
-          lake_view: fd.get("lake_view") === "on", title: fd.get("title"), notes: fd.get("notes"), features: chosen(), nearby: fd.get("nearby"), photos: photos.slice(0, 3),
+          lake_view: fd.get("lake_view") === "on", title: fd.get("title"), notes: fd.get("notes"), features: chosen(), custom_features: custom, nearby: fd.get("nearby"), photos: photos.slice(0, 3),
+          max_guests: fd.get("max_guests"), beds: fd.get("beds"), min_nights: fd.get("min_nights"), checkin: fd.get("checkin"), checkout: fd.get("checkout"), house_rules: fd.get("house_rules"),
         }),
       });
       const j = await res.json().catch(() => ({}));
@@ -199,7 +213,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
     const op = String(fd.get("operation") || "renta");
     const ty = typeLabel("es", String(fd.get("type") || "casa") as PropType);
     const col = String(fd.get("colonia") || "").trim();
-    const opTxt = op === "venta" ? "en venta" : op === "traspaso" ? "en traspaso" : "en renta";
+    const opTxt = op === "venta" ? "en venta" : op === "traspaso" ? "en traspaso" : op === "hospedaje" ? "para hospedarse" : "en renta";
     const land = parseLand(fd.get("land_dims"));
     const facts = [
       num(fd.get("bedrooms")) != null && `${num(fd.get("bedrooms"))} recámaras`,
@@ -207,13 +221,15 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
       land && `terreno de ${land.m2} m²${land.dims ? ` (${land.dims} m)` : ""}`,
       num(fd.get("built_m2")) != null && `${num(fd.get("built_m2"))} m² de construcción`,
       fd.get("lake_view") === "on" && "vista al lago",
+      op === "hospedaje" && num(fd.get("max_guests")) != null && `hasta ${num(fd.get("max_guests"))} huéspedes`,
+      op === "hospedaje" && num(fd.get("beds")) != null && `${num(fd.get("beds"))} camas`,
     ].filter(Boolean) as string[];
     const lines = [`${ty} ${opTxt} en ${col ? col + ", " : ""}Pátzcuaro, Michoacán${facts.length ? `: ${facts.join(", ")}` : ""}.`];
-    const labels = chosen().map((k) => featureLabel(k, "es")).filter(Boolean) as string[];
+    const labels = [...chosen().map((k) => featureLabel(k, "es")), ...custom].filter(Boolean) as string[];
     if (labels.length) lines.push(`Características: ${labels.map((l) => l.toLowerCase()).join(", ")}.`);
     const near = String(fd.get("nearby") || "").trim();
     if (near) lines.push(`Ubicación: ${near}.`);
-    lines.push("Agenda tu visita escribiendo por WhatsApp desde este anuncio.");
+    lines.push(op === "hospedaje" ? "Consulta disponibilidad escribiendo por WhatsApp desde este anuncio, con tus fechas y el número de personas." : "Agenda tu visita escribiendo por WhatsApp desde este anuncio.");
     const de = f.querySelector<HTMLTextAreaElement>('textarea[name="description"]');
     if (de) de.value = lines.join("\n\n");
   }
@@ -267,7 +283,8 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
       land_dims: fd.get("land_dims"), built_m2: fd.get("built_m2"), owner_kind: fd.get("owner_kind"),
       whatsapp: fd.get("whatsapp"), email: fd.get("email"), website: fd.get("website"), lang,
       accept: fd.get("accept") === "on", photos,
-      lat: geo?.lat ?? null, lng: geo?.lng ?? null, lake_view: fd.get("lake_view") === "on", features: chosen(),
+      lat: geo?.lat ?? null, lng: geo?.lng ?? null, lake_view: fd.get("lake_view") === "on", features: chosen(), custom_features: custom,
+      max_guests: fd.get("max_guests"), beds: fd.get("beds"), min_nights: fd.get("min_nights"), checkin: fd.get("checkin"), checkout: fd.get("checkout"), house_rules: fd.get("house_rules"),
     };
     const res = await fetch("/api/propiedades", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const j = await res.json().catch(() => ({}));
@@ -309,13 +326,13 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
       <div data-step="0" hidden={step !== 0} className="stack">
         <div className="grid2">
           <label>{t("Operación", "Operation")}
-            <select name="operation" required defaultValue="renta" onChange={(e) => setOpSel(e.target.value)}>
+            <select name="operation" required defaultValue="renta" onChange={(e) => { const v = e.target.value; setOpSel(v); if (!typesForOp(v).includes(typeSel as PropType)) setTypeSel(typesForOp(v)[0]); }}>
               {(Object.keys(OPERATIONS) as Operation[]).map((k) => <option key={k} value={k}>{opLabel(lang, k)}</option>)}
             </select>
           </label>
           <label>{t("Tipo de inmueble", "Property type")}
-            <select name="type" required defaultValue="casa" onChange={(e) => setTypeSel(e.target.value)}>
-              {(Object.keys(TYPES) as PropType[]).map((k) => <option key={k} value={k}>{typeLabel(lang, k)}</option>)}
+            <select name="type" required value={typeSel} onChange={(e) => setTypeSel(e.target.value)}>
+              {typesForOp(opSel).map((k) => <option key={k} value={k}>{typeLabel(lang, k)}</option>)}
             </select>
           </label>
         </div>
@@ -323,13 +340,13 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
           <input name="title" required minLength={8} maxLength={90} placeholder={t("Casa de 3 recámaras cerca de la Plaza Vasco de Quiroga", "3-bedroom house near Plaza Vasco de Quiroga")} />
         </label>
         <div className="grid2">
-          <label>{t("Precio (MXN)", "Price (MXN)")}
+          <label>{lodging ? t("Precio por noche, desde (MXN)", "Price per night, from (MXN)") : t("Precio (MXN)", "Price (MXN)")}
             <input type="text" inputMode="numeric" autoComplete="off" aria-describedby="price-hint" placeholder={t("Vacío = “a tratar”", "Empty = “negotiable”")}
               value={priceDigits ? Number(priceDigits).toLocaleString("en-US") : ""}
               onChange={(e) => setPriceDigits(e.target.value.replace(/\D/g, "").replace(/^0+/, "").slice(0, 10))} />
             <input type="hidden" name="price" value={priceDigits} />
             <small id="price-hint" className={priceWarn(priceNum) ? "error" : "muted"}>
-              {priceNum ? <>= ${priceNum.toLocaleString("en-US")} MXN{opSel === "renta" ? t(" por mes", " per month") : ""} ({priceWords(priceNum)}){priceWarn(priceNum) ? ` — ${priceWarn(priceNum)}` : ""}</> : t("Solo números, sin comas ni signos.", "Numbers only, no commas or signs.")}
+              {priceNum ? <>= ${priceNum.toLocaleString("en-US")} MXN{opSel === "renta" ? t(" por mes", " per month") : lodging ? t(" por noche", " per night") : ""} ({priceWords(priceNum)}){priceWarn(priceNum) ? ` — ${priceWarn(priceNum)}` : ""}</> : t("Solo números, sin comas ni signos.", "Numbers only, no commas or signs.")}
             </small>
           </label>
           <label>{t("Colonia o zona", "Neighborhood or area")}
@@ -343,14 +360,32 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         <div className="grid4">
           <label>{t("Recámaras", "Bedrooms")}<input name="bedrooms" type="number" min={0} max={30} inputMode="numeric" /></label>
           <label>{t("Baños", "Bathrooms")}<input name="bathrooms" type="number" min={0} max={30} inputMode="numeric" /></label>
-          <label>{t("Terreno (ej. 10x21)", "Lot (e.g. 10x21)")}
+          {!lodging && <label>{t("Terreno (ej. 10x21)", "Lot (e.g. 10x21)")}
             <input name="land_dims" value={landIn} onChange={(e) => { const v = e.target.value; setLandIn(v); e.target.setCustomValidity(v.trim() !== "" && !parseLand(v) ? t("Escríbelo como 10x21 o 210", "Write it as 10x21 or 210") : ""); }} inputMode="text" autoComplete="off" maxLength={30}
               placeholder="10x21" aria-describedby="land-hint"
               />
             <small id="land-hint" className="muted">{landIn.trim() === "" ? t("Frente x fondo en metros, o solo m².", "Width x depth in meters, or just m².") : landParsed ? `= ${landParsed.m2} m²` : t("Escríbelo como 10x21 o 210", "Write it as 10x21 or 210")}</small>
-          </label>
-          <label>{t("m² construcción", "Built m²")}<input name="built_m2" type="number" min={0} inputMode="numeric" /></label>
+          </label>}
+          {!lodging && <label>{t("m² construcción", "Built m²")}<input name="built_m2" type="number" min={0} inputMode="numeric" /></label>}
         </div>
+        {lodging && (
+          <fieldset className="stack">
+            <legend>{t("Datos del hospedaje", "Lodging details")}</legend>
+            <div className="grid4">
+              <label>{t("Máx. de personas", "Max guests")}<input name="max_guests" type="number" min={1} max={200} required inputMode="numeric" /></label>
+              <label>{t("Camas", "Beds")}<input name="beds" type="number" min={0} max={100} inputMode="numeric" /></label>
+              <label>{t("Noches mínimas", "Minimum nights")}<input name="min_nights" type="number" min={1} max={60} inputMode="numeric" placeholder="1" /></label>
+              <span />
+            </div>
+            <div className="grid2">
+              <label>{t("Entrada desde", "Check-in from")}<input name="checkin" type="time" /></label>
+              <label>{t("Salida hasta", "Check-out by")}<input name="checkout" type="time" /></label>
+            </div>
+            <label>{t("Reglas y políticas (opcional)", "House rules and policies (optional)")}
+              <textarea name="house_rules" rows={3} maxLength={500} placeholder={t("Ej. No se permiten fiestas. Mascotas con costo extra. Cancelación gratis hasta 3 días antes.", "E.g. No parties. Pets for an extra fee. Free cancellation up to 3 days before.")} />
+            </label>
+          </fieldset>
+        )}
       </div>
 
       <div data-step="1" hidden={step !== 1} className="stack">
@@ -414,6 +449,20 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
               </div>
             );
           })}
+          <div className="feat-group">
+            <p className="feat-title">{t("¿Algo que no esté en la lista?", "Something not on the list?")}</p>
+            <div className="cf-row">
+              <input value={customIn} maxLength={40} placeholder={t("Ej. Cuarto de juegos, horno de leña, vista al cerro…", "E.g. Game room, wood oven, hill view…")} aria-label={t("Agregar característica propia", "Add your own feature")}
+                onChange={(e) => setCustomIn(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustom(); } }} />
+              <button type="button" className="btn btn-small btn-ghost" onClick={addCustom} disabled={customIn.trim().length < 2 || custom.length >= 12}>{t("Agregar", "Add")}</button>
+            </div>
+            {custom.length > 0 && (
+              <div className="cf-chips">
+                {custom.map((c) => <span key={c} className="cf-chip">{c}<button type="button" aria-label={t(`Quitar ${c}`, `Remove ${c}`)} onClick={() => setCustom((cur) => cur.filter((x) => x !== c))}>×</button></span>)}
+              </div>
+            )}
+            <small className="muted">{t("Máximo 12, cortas y sin teléfonos ni enlaces. Aparecen en tu anuncio y la IA las usa.", "Up to 12, short, no phone numbers or links. They appear on your listing and the AI uses them.")}</small>
+          </div>
         </fieldset>
         <label>{t("Cerca de (opcional)", "Nearby (optional)")}
           <input name="nearby" maxLength={250} placeholder={t("A 5 min a pie de la Plaza Vasco de Quiroga, junto al mercado…", "5 min walk from Plaza Vasco de Quiroga, next to the market…")} />

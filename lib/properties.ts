@@ -33,10 +33,18 @@ export type Property = {
   lat: number | null;
   lng: number | null;
   lake_view: boolean;
+  max_guests?: number | null;
+  beds?: number | null;
+  min_nights?: number | null;
+  checkin?: string | null;
+  checkout?: string | null;
+  house_rules?: string | null;
+  custom_features?: string[];
 };
 
 const PUBLIC_COLS = `id, slug, operation, type, title, description, price, colonia, colonia_slug, bedrooms, bathrooms,
-  land_m2, built_m2, owner_kind, whatsapp, photos, status, views, wa_clicks, created_at, approved_at, confirmed_at, verified_at, lat, lng, lake_view, land_dims, features`;
+  land_m2, built_m2, owner_kind, whatsapp, photos, status, views, wa_clicks, created_at, approved_at, confirmed_at, verified_at, lat, lng, lake_view, land_dims, features,
+  max_guests, beds, min_nights, checkin, checkout, house_rules, custom_features`;
 
 export type Filters = {
   operation?: Operation;
@@ -117,4 +125,12 @@ export async function listMapPoints(f: { operation?: Operation; type?: PropType;
 export async function listBySlugs(slugs: string[]): Promise<Property[]> {
   if (!slugs.length) return [];
   return query<Property>(`SELECT ${PUBLIC_COLS} FROM properties WHERE slug = ANY($1::text[]) AND ${FRESH}`, [slugs.slice(0, 60)]);
+}
+
+/** Fechas ocupadas de un anuncio de hospedaje, de hoy en adelante (hora de Pátzcuaro), como "YYYY-MM-DD". */
+export async function getBlockedDates(propertyId: number): Promise<string[]> {
+  const rows = await query<{ d: string }>(
+    `SELECT to_char(day, 'YYYY-MM-DD') AS d FROM blocked_dates
+      WHERE property_id = $1 AND day >= (now() AT TIME ZONE 'America/Mexico_City')::date ORDER BY day`, [propertyId]);
+  return rows.map((r) => r.d);
 }

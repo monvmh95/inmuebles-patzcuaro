@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { OPERATIONS, TYPES, type Operation, type PropType } from "@/lib/config";
+import { OPERATIONS, typesForOp, type Operation } from "@/lib/config";
 import { opLabel, typePlural } from "@/lib/i18n";
 import { useLang, useHref } from "./LangProvider";
 
@@ -51,7 +51,7 @@ export default function SearchBar({ op, type, colonia, max, lake, colonias }: Pr
       <div className="search-row">
         <select name="type" defaultValue={type} aria-label={en ? "Property type" : "Tipo de inmueble"}>
           <option value="">{en ? "Any type" : "Todo tipo"}</option>
-          {(Object.keys(TYPES) as PropType[]).map((k) => <option key={k} value={k}>{typePlural(lang, k)}</option>)}
+          {typesForOp(op || undefined).map((k) => <option key={k} value={k}>{typePlural(lang, k)}</option>)}
         </select>
         <div className={`search-extra${more ? " open" : ""}`}>
           <select name="colonia" defaultValue={colonia} aria-label={en ? "Neighborhood" : "Colonia"}>

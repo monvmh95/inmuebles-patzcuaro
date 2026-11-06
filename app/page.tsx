@@ -80,10 +80,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
         <div>
           <span className="eyebrow">{t("Pueblo Mágico · Michoacán", "Pueblo Mágico · Michoacán, Mexico")}</span>
           <h1>{t("Tu próximo hogar en ", "Your next home in ")}<em>{CITY}</em>{t(", directo con el dueño", ", direct from the owner")}</h1>
-          <p className="hero-lede">{t("Renta, venta y traspaso de casas, terrenos y locales. Contacta por WhatsApp, sin comisiones del sitio.", "Rentals, sales and business transfers of houses, land and commercial space. Contact owners on WhatsApp, no site commission.")}</p>
+          <p className="hero-lede">{t("Renta, venta, traspaso y hospedaje en Pátzcuaro. Contacta directo por WhatsApp, sin comisiones del sitio.", "Rentals, sales, business transfers and lodging in Pátzcuaro. Contact owners and hosts directly on WhatsApp, no site commission.")}</p>
           <SearchBar op={op} type={type} colonia={colonia} max={max} lake={lake} colonias={colonias} />
           <div className="chips">
             <L className="chip" href="/renta/casas">{t("Casas en renta", "Houses for rent")}</L>
+            <L className="chip" href="/hospedaje">{t("Hospedaje", "Lodging")}</L>
             <L className="chip" href="/venta/terrenos">{t("Terrenos en venta", "Land for sale")}</L>
             <L className="chip" href="/renta/departamentos">{t("Departamentos en renta", "Apartments for rent")}</L>
             <L className="chip" href="/renta/locales">{t("Locales en renta", "Commercial space for rent")}</L>
@@ -116,7 +117,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
           <h2>{filtering ? t(`Resultados (${list2.length})`, `Results (${list2.length})`) : t("Publicadas recientemente", "Recently listed")}</h2>
           {!filtering && (
             <span className="muted small">
-              {counts.renta ?? 0} {t("en renta", "for rent")} · {counts.venta ?? 0} {t("en venta", "for sale")} · {counts.traspaso ?? 0} {t("en traspaso", "for transfer")}
+              {counts.renta ?? 0} {t("en renta", "for rent")} · {counts.venta ?? 0} {t("en venta", "for sale")} · {counts.traspaso ?? 0} {t("en traspaso", "for transfer")} · {counts.hospedaje ?? 0} {t("de hospedaje", "lodging")}
             </span>
           )}
         </div>

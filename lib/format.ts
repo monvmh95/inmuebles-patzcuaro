@@ -4,11 +4,11 @@ export function formatPrice(price: number | null, operation: string, lang: "es" 
   if (lang === "en") {
     if (price == null) return "Price negotiable";
     const n = `$${new Intl.NumberFormat("en-US").format(price)} MXN`;
-    return operation === "renta" ? `${n} /month` : n;
+    return operation === "renta" ? `${n} /month` : operation === "hospedaje" ? `from ${n} /night` : n;
   }
   if (price == null) return "Precio a tratar";
   const n = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(price);
-  return operation === "renta" ? `${n} /mes` : n;
+  return operation === "renta" ? `${n} /mes` : operation === "hospedaje" ? `desde ${n} /noche` : n;
 }
 
 export function formatDate(d: Date | string, lang: "es" | "en" = "es"): string {

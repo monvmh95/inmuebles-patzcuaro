@@ -44,6 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <nav className="nav" aria-label={t("Principal", "Main")}>
                 <Link href={h("/renta")} className="nav-sec">{t("Renta", "Rent")}</Link>
                 <Link href={h("/venta")} className="nav-sec">{t("Venta", "Sale")}</Link>
+                <Link href={h("/hospedaje")} className="nav-sec">{t("Hospedaje", "Lodging")}</Link>
                 <Link href={h("/mapa")} className="nav-sec">{t("Mapa", "Map")}</Link>
                 <Link href="/mis-anuncios" className="nav-sec">{t("Mis anuncios", "My listings")}</Link>
                 <Link href={h("/favoritos")} className="nav-fav" aria-label={t("Mis favoritos", "My favorites")} title={t("Mis favoritos", "My favorites")}>♡<span className="nav-fav-t"> {t("Favoritos", "Favorites")}</span></Link>

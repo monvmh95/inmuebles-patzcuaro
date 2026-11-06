@@ -3,12 +3,13 @@ import { OPERATIONS, TYPES, type Operation, type PropType } from "./config";
 export type Lang = "es" | "en";
 
 const TOP: [string, string][] = [
-  ["renta", "rent"], ["venta", "sale"], ["traspaso", "transfer"], ["propiedad", "property"], ["publicar", "publish"],
+  ["renta", "rent"], ["venta", "sale"], ["traspaso", "transfer"], ["hospedaje", "lodging"], ["propiedad", "property"], ["publicar", "publish"],
   ["mapa", "map"], ["favoritos", "favorites"], ["verificacion", "verification"], ["guias", "guides"], ["colonias", "neighborhoods"],
 ];
 const TYPES_: [string, string][] = [
   ["casas", "houses"], ["departamentos", "apartments"], ["terrenos", "land"], ["locales", "commercial"],
   ["cuartos", "rooms"], ["bodegas", "warehouses"], ["huertas", "orchards"],
+  ["hoteles", "hotels"], ["posadas", "inns"], ["cabanas", "cabins"], ["hostales", "hostels"], ["glamping", "glamping"],
 ];
 const GUIDES: [string, string][] = [
   ["como-evitar-fraudes-al-rentar", "avoiding-rental-scams"],
@@ -17,7 +18,7 @@ const GUIDES: [string, string][] = [
   ["vivir-en-patzcuaro", "living-in-patzcuaro"],
   ["colonias", "neighborhoods"],
 ];
-const OPS = new Set(["renta", "venta", "traspaso"]);
+const OPS = new Set(["renta", "venta", "traspaso", "hospedaje"]);
 
 const toMap = (pairs: [string, string][], dir: "en" | "es") => new Map(pairs.map(([es, en]) => (dir === "en" ? [es, en] : [en, es])));
 const MAPS = {
@@ -59,11 +60,13 @@ export function switchPath(lang: Lang, currentPublicPath: string): string {
   return localizePath("en", currentPublicPath);
 }
 
-const OP_EN = { renta: { label: "Rent", plural: "for rent" }, venta: { label: "Sale", plural: "for sale" }, traspaso: { label: "Transfer", plural: "for transfer" } } as const;
+const OP_EN = { renta: { label: "Rent", plural: "for rent" }, venta: { label: "Sale", plural: "for sale" }, traspaso: { label: "Transfer", plural: "for transfer" }, hospedaje: { label: "Lodging", plural: "for lodging" } } as const;
 const TYPE_EN = {
   casa: { label: "House", plural: "Houses" }, departamento: { label: "Apartment", plural: "Apartments" }, terreno: { label: "Land", plural: "Land" },
   local: { label: "Commercial space", plural: "Commercial spaces" }, cuarto: { label: "Room", plural: "Rooms" },
   bodega: { label: "Warehouse", plural: "Warehouses" }, huerta: { label: "Orchard", plural: "Orchards" },
+  hotel: { label: "Hotel", plural: "Hotels" }, posada: { label: "Inn", plural: "Inns" }, cabana: { label: "Cabin", plural: "Cabins" },
+  hostal: { label: "Hostel", plural: "Hostels" }, glamping: { label: "Glamping", plural: "Glamping" },
 } as const;
 export function opEn(op: string) { return OP_EN[op as keyof typeof OP_EN]; }
 export function typeEn(t: string) { return TYPE_EN[t as keyof typeof TYPE_EN]; }

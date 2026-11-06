@@ -96,9 +96,23 @@ const SCHEMA = [
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
   )`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS features JSONB NOT NULL DEFAULT '[]'::jsonb`,
+  `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_operation_check`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS max_guests SMALLINT`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS beds SMALLINT`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS min_nights SMALLINT`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS checkin TEXT`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS checkout TEXT`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS house_rules TEXT`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS custom_features JSONB NOT NULL DEFAULT '[]'::jsonb`,
+  `CREATE TABLE IF NOT EXISTS blocked_dates (
+    property_id BIGINT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+    day         DATE NOT NULL,
+    PRIMARY KEY (property_id, day)
+  )`,
   `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check`,
   `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check2`,
-  `ALTER TABLE properties ADD CONSTRAINT properties_type_check2 CHECK (type IN ('casa','departamento','terreno','local','cuarto','bodega','huerta'))`,
+  `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check3`,
+  `ALTER TABLE properties ADD CONSTRAINT properties_type_check3 CHECK (type IN ('casa','departamento','terreno','local','cuarto','bodega','huerta','hotel','posada','cabana','hostal','glamping'))`,
   `CREATE TABLE IF NOT EXISTS colonia_content (
     colonia_slug TEXT PRIMARY KEY,
     name         TEXT NOT NULL,

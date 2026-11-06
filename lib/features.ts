@@ -3,9 +3,10 @@ import type { PropType } from "./config";
 // Catálogo de características que quien publica marca con casillas.
 // Sirven para: (1) pedirle a la IA datos reales, (2) mostrarlas en la ficha y
 // (3) publicarlas como amenityFeature en schema.org (SEO / respuestas de IA).
-export type Feature = { key: string; es: string; en: string; group: "servicios" | "espacios" | "zona" | "condiciones"; types: PropType[] | "all"; ops?: ("renta" | "venta" | "traspaso")[] };
+export type Feature = { key: string; es: string; en: string; group: "servicios" | "espacios" | "zona" | "condiciones"; types: PropType[] | "all"; ops?: ("renta" | "venta" | "traspaso" | "hospedaje")[] };
 
 const HOME: PropType[] = ["casa", "departamento", "cuarto"];
+const LODG: PropType[] = ["hotel", "posada", "cabana", "hostal", "glamping", "casa", "departamento", "cuarto"];
 const BUILT: PropType[] = ["casa", "departamento", "cuarto", "local", "bodega"];
 
 export const FEATURES: Feature[] = [
@@ -43,6 +44,26 @@ export const FEATURES: Feature[] = [
   { key: "uso_habitacional", es: "Uso de suelo habitacional", en: "Residential zoning", group: "condiciones", types: ["terreno"] },
   { key: "uso_comercial", es: "Uso de suelo comercial", en: "Commercial zoning", group: "condiciones", types: ["terreno", "local", "bodega"] },
   { key: "uso_agricola", es: "Uso agrícola", en: "Agricultural use", group: "condiciones", types: ["terreno", "huerta"] },
+  // Hospedaje (por noche): solo se ofrecen cuando la operación es "hospedaje"
+  { key: "h_wifi", es: "Wi-Fi", en: "Wi-Fi", group: "servicios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_desayuno", es: "Desayuno incluido", en: "Breakfast included", group: "servicios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_agua_caliente", es: "Agua caliente", en: "Hot water", group: "servicios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_calefaccion", es: "Calefacción o chimenea", en: "Heating or fireplace", group: "servicios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_tv", es: "Televisión", en: "TV", group: "servicios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_lavanderia", es: "Lavandería", en: "Laundry", group: "servicios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_recepcion", es: "Recepción o atención todo el día", en: "Front desk or 24h assistance", group: "servicios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_restaurante", es: "Restaurante o cocina para huéspedes", en: "Restaurant or guest kitchen", group: "servicios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_estacionamiento", es: "Estacionamiento", en: "Parking", group: "espacios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_cocina", es: "Cocina equipada", en: "Equipped kitchen", group: "espacios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_alberca", es: "Alberca", en: "Pool", group: "espacios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_jacuzzi", es: "Jacuzzi o tina", en: "Hot tub or bathtub", group: "espacios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_jardin", es: "Jardín o terraza", en: "Garden or terrace", group: "espacios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_vista_lago", es: "Vista al lago", en: "Lake view", group: "espacios", types: LODG, ops: ["hospedaje"] },
+  { key: "h_centro", es: "Cerca del centro (a pie)", en: "Walkable to downtown", group: "zona", types: LODG, ops: ["hospedaje"] },
+  { key: "h_mascotas", es: "Acepta mascotas", en: "Pets allowed", group: "condiciones", types: LODG, ops: ["hospedaje"] },
+  { key: "h_ninos", es: "Apto para niños", en: "Family friendly", group: "condiciones", types: LODG, ops: ["hospedaje"] },
+  { key: "h_accesible", es: "Accesible (sin escalones)", en: "Step-free access", group: "condiciones", types: LODG, ops: ["hospedaje"] },
+  { key: "h_factura", es: "Entregamos factura", en: "Invoice available", group: "condiciones", types: LODG, ops: ["hospedaje"] },
 ];
 
 export const FEATURE_KEYS = FEATURES.map((f) => f.key) as [string, ...string[]];
@@ -54,7 +75,8 @@ export const GROUP_LABEL: Record<Feature["group"], { es: string; en: string }> =
 };
 
 export function featuresFor(type: string, op: string): Feature[] {
-  return FEATURES.filter((f) => (f.types === "all" || f.types.includes(type as PropType)) && (!f.ops || f.ops.includes(op as "renta")));
+  const lodging = op === "hospedaje";
+  return FEATURES.filter((f) => (f.types === "all" || f.types.includes(type as PropType)) && (lodging ? f.ops?.includes("hospedaje") : !f.ops || f.ops.includes(op as "renta")));
 }
 export function featureLabel(key: string, lang: "es" | "en"): string | null {
   const f = FEATURES.find((x) => x.key === key);
@@ -63,4 +85,18 @@ export function featureLabel(key: string, lang: "es" | "en"): string | null {
 export function cleanFeatures(v: unknown): string[] {
   if (!Array.isArray(v)) return [];
   return [...new Set(v.map(String).filter((k) => FEATURE_KEYS.includes(k)))].slice(0, 30);
+}
+
+/** Características escritas por la persona: texto corto, sin enlaces, correos ni teléfonos. */
+export function cleanCustom(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  const out: string[] = [];
+  for (const raw of v) {
+    const t = String(raw ?? "").replace(/\s+/g, " ").trim().slice(0, 40);
+    if (t.length < 2) continue;
+    if (/https?:|www\.|\.com|\.mx|@/i.test(t) || /\d{7,}/.test(t.replace(/[\s.-]/g, ""))) continue;
+    if (!out.some((x) => x.toLowerCase() === t.toLowerCase())) out.push(t);
+    if (out.length >= 12) break;
+  }
+  return out;
 }

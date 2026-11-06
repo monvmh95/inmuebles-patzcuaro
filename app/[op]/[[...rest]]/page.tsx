@@ -2,7 +2,7 @@ import L from "@/components/L";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import PropertyCard from "@/components/PropertyCard";
-import { CITY, STATE, TYPES, isOperation, typeFromSlug } from "@/lib/config";
+import { CITY, STATE, TYPES, isOperation, typeFromSlug, typesForOp } from "@/lib/config";
 import { getLang, tf, opLabel, opPlural, typePlural } from "@/lib/lang";
 import type { Lang } from "@/lib/i18n";
 import { alternatesFor } from "@/lib/alternates";
@@ -32,6 +32,11 @@ async function load(p: NonNullable<ReturnType<typeof parse>>) {
 }
 
 function heading(p: NonNullable<ReturnType<typeof parse>>, lang: Lang, coloniaName?: string) {
+  if (p.op === "hospedaje") {
+    const where = `${coloniaName ? `${coloniaName}, ` : ""}${CITY}`;
+    if (lang === "en") return p.type ? `${typePlural(lang, p.type)} to stay in ${where}` : `Lodging in ${where}: hotels, cabins and more`;
+    return p.type ? `${TYPES[p.type].plural} para hospedarse en ${where}` : `Hospedaje en ${where}: hoteles, cabañas y más`;
+  }
   if (lang === "en") {
     const what = p.type ? typePlural(lang, p.type) : "Properties";
     return `${what} ${opPlural(lang, p.op)} in ${coloniaName ? `${coloniaName}, ` : ""}${CITY}`;
@@ -84,18 +89,23 @@ export default async function Landing({ params }: { params: Promise<Params> }) {
       <p className="muted">{list.length ? t(`${list.length} ${list.length === 1 ? "anuncio" : "anuncios"} en ${CITY}, ${STATE}.`, `${list.length} ${list.length === 1 ? "listing" : "listings"} in ${CITY}, ${STATE}.`) : t("Todavía no hay anuncios en esta categoría.", "There are no listings in this category yet.")}</p>
 
       <div className="chips" style={{ margin: "12px 0 20px" }}>
-        {(Object.keys(TYPES) as (keyof typeof TYPES)[]).map((ty) => (
+        {typesForOp(p.op).map((ty) => (
           <L key={ty} className="chip" style={{ color: "var(--brand)", borderColor: "var(--line)", background: "var(--surface)" }} href={`/${p.op}/${TYPES[ty].slug}`}>
             {typePlural(lang, ty)}
           </L>
         ))}
       </div>
 
+      {p.op === "hospedaje" && (
+        <p className="muted" style={{ maxWidth: 720 }}>{t(
+          "Conoce las opciones, revisa el calendario de cada lugar y pregunta disponibilidad directo al anfitrión por WhatsApp, sin comisiones del sitio. Los precios son por noche y los confirma quien publica.",
+          "See the options, check each place's calendar and ask the host about availability directly on WhatsApp, with no site commission. Prices are per night and confirmed by the host.")}</p>
+      )}
       {list.length ? (
         <div className="grid">{list.map((x) => <PropertyCard key={x.id} p={x} lang={lang} />)}</div>
       ) : (
         <div className="empty">
-          <p>{t("Sé el primero en publicar aquí. Es gratis.", "Be the first to list here. It is free.")}</p>
+          <p>{p.op === "hospedaje" ? t("¿Tienes un hotel, cabaña, posada o cuarto para hospedar? Publica gratis y recibe consultas directas.", "Do you have a hotel, cabin, inn or room to rent by the night? List it for free and get direct inquiries.") : t("Sé el primero en publicar aquí. Es gratis.", "Be the first to list here. It is free.")}</p>
           <L href="/publicar" className="btn">{t("Publicar mi propiedad", "List my property")}</L>
         </div>
       )}

@@ -5,7 +5,7 @@ export const dynamic = "force-static";
 export function GET() {
   const body = `# ${SITE_NAME}
 
-> Tablón gratuito de propiedades en renta, venta y traspaso en ${CITY}, ${STATE}, México. Los dueños y agentes publican sin costo y los interesados los contactan directo por WhatsApp. El sitio no es inmobiliaria ni intermedia operaciones.
+> Tablón gratuito de propiedades en renta, venta y traspaso, y de hospedaje por noche (hoteles, posadas, cabañas, hostales, glamping, casas y cuartos), en ${CITY}, ${STATE}, México. Los dueños y agentes publican sin costo y los interesados los contactan directo por WhatsApp. El sitio no es inmobiliaria ni intermedia operaciones.
 
 ## Qué encontrarás
 - Tipos de inmueble: ${Object.values(TYPES).map((t) => t.plural.toLowerCase()).join(", ")}.
@@ -16,6 +16,7 @@ export function GET() {
 - [Inicio y búsqueda](${SITE_URL}/): anuncios más recientes con filtros.
 - [Propiedades en renta](${SITE_URL}/renta): casas, departamentos, locales y cuartos en renta.
 - [Propiedades en venta](${SITE_URL}/venta): casas, terrenos y locales en venta.
+- [Hospedaje en ${CITY}](${SITE_URL}/hospedaje): hoteles, posadas, cabañas y casas por noche, con calendario de disponibilidad y contacto directo con el anfitrión.
 - [Colonias de ${CITY}](${SITE_URL}/guias/colonias): zonas con anuncios disponibles.
 - [Cómo evitar fraudes al rentar](${SITE_URL}/guias/como-evitar-fraudes-al-rentar): recomendaciones prácticas.
 - [Guías](${SITE_URL}/guias): comprar terreno, rentar por temporada y vivir en ${CITY}.
