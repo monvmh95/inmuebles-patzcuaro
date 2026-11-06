@@ -98,7 +98,7 @@ export default function MyListings({ items, email }: { items: MyItem[]; email: s
         <h1 style={{ margin: 0 }}>Mis anuncios</h1>
         <a className="btn btn-small" href="/publicar">Publicar otro</a>
       </div>
-      <p className="muted small" style={{ margin: 0 }}>Sesión de <strong>{email}</strong> · este dispositivo te recuerda. <button type="button" className="linklike small" onClick={logout}>Salir</button></p>
+      <p className="muted small" style={{ margin: 0 }}>Sesión de <strong>{email}</strong> · este dispositivo te recuerda. <button type="button" className="linklike small" onClick={() => { if (confirm("Si sales, la próxima vez te pediremos un código por SMS. ¿Salir de este dispositivo?")) logout(); }}>Salir</button></p>
       {items.length === 0 && <p className="muted">Todavía no tienes anuncios con este correo.</p>}
       {items.map((it) => <Card key={it.slug} it={it} />)}
     </div>
