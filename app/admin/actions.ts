@@ -42,6 +42,14 @@ export async function approve(fd: FormData) {
   });
   refresh();
 }
+export async function setPrice(fd: FormData) {
+  await guard();
+  const raw = String(fd.get("price") ?? "").replace(/[^\d]/g, "");
+  const price = raw === "" ? null : Number(raw);
+  if (price != null && (!Number.isInteger(price) || price < 0 || price > 2_000_000_000)) throw new Error("precio inválido");
+  await query(`UPDATE properties SET price=$2 WHERE id=$1`, [id(fd), price]);
+  refresh();
+}
 export async function reject(fd: FormData) {
   await guard();
   await query(`UPDATE properties SET status='rejected' WHERE id=$1`, [id(fd)]);

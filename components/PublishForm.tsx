@@ -47,6 +47,16 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
     if (from == null || from === to) return;
     setPhotos((p) => { const a = [...p]; const [m] = a.splice(from, 1); a.splice(to, 0, m); return a; });
   }
+  const [priceDigits, setPriceDigits] = useState("");
+  const priceNum = priceDigits ? Number(priceDigits) : null;
+  const priceWords = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toLocaleString(en ? "en-US" : "es-MX", { maximumFractionDigits: 2 })} ${t("millones de pesos", "million pesos")}` : n >= 1000 ? `${Math.round(n / 1000).toLocaleString(en ? "en-US" : "es-MX")} ${t("mil pesos", "thousand pesos")}` : `${n} ${t("pesos", "pesos")}`);
+  const priceWarn = (n: number | null) => {
+    if (n == null || n === 0) return "";
+    if (opSel === "renta" && n > 300_000) return t("Es un precio mensual muy alto. ¿Seguro que es por mes?", "That is a very high monthly price. Is it really per month?");
+    if (opSel !== "renta" && n < 20_000) return t("Parece muy bajo para una venta o traspaso. Revisa los ceros.", "That looks very low for a sale or transfer. Check the zeros.");
+    if (n > 150_000_000) return t("Parece demasiado alto. Revisa los ceros.", "That looks too high. Check the zeros.");
+    return "";
+  };
   const [landIn, setLandIn] = useState("");
   const [opSel, setOpSel] = useState<string>("renta");
   const [typeSel, setTypeSel] = useState<string>("casa");
@@ -223,7 +233,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
   }
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="form wizard" noValidate>
+    <form ref={formRef} onSubmit={onSubmit} onWheel={(e) => { const el = e.target as HTMLElement; if (el instanceof HTMLInputElement && el.type === "number") el.blur(); }} className="form wizard" noValidate>
       <ol className="steps" aria-label={t("Progreso", "Progress")}>
         {STEPS.map((s, i) => (
           <li key={s} className={i === step ? "on" : i < step ? "done" : ""} aria-current={i === step ? "step" : undefined}>
@@ -250,7 +260,13 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         </label>
         <div className="grid2">
           <label>{t("Precio (MXN)", "Price (MXN)")}
-            <input name="price" type="number" min={0} inputMode="numeric" placeholder={t("Vacío = “a tratar”", "Empty = “negotiable”")} />
+            <input type="text" inputMode="numeric" autoComplete="off" aria-describedby="price-hint" placeholder={t("Vacío = “a tratar”", "Empty = “negotiable”")}
+              value={priceDigits ? Number(priceDigits).toLocaleString("en-US") : ""}
+              onChange={(e) => setPriceDigits(e.target.value.replace(/\D/g, "").replace(/^0+/, "").slice(0, 10))} />
+            <input type="hidden" name="price" value={priceDigits} />
+            <small id="price-hint" className={priceWarn(priceNum) ? "error" : "muted"}>
+              {priceNum ? <>= ${priceNum.toLocaleString("en-US")} MXN{opSel === "renta" ? t(" por mes", " per month") : ""} ({priceWords(priceNum)}){priceWarn(priceNum) ? ` — ${priceWarn(priceNum)}` : ""}</> : t("Solo números, sin comas ni signos.", "Numbers only, no commas or signs.")}
+            </small>
           </label>
           <label>{t("Colonia o zona", "Neighborhood or area")}
             <input name="colonia" required maxLength={60} placeholder={t("Centro, San Francisco, Ibarra…", "Centro, San Francisco, Ibarra…")} />

@@ -5,7 +5,7 @@ import { KING_ENABLED, OPERATIONS, TYPES } from "@/lib/config";
 import { formatDate, formatPrice } from "@/lib/util";
 import { saveColonia } from "./actions";
 import { listColoniaContent } from "@/lib/colonias";
-import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport } from "./actions";
+import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport, setPrice } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Administración", robots: { index: false, follow: false } };
@@ -118,11 +118,19 @@ export default async function Admin() {
       <section>
         <h2>Publicadas</h2>
         <table className="table">
-          <thead><tr><th>Anuncio</th><th>Visitas</th><th>WhatsApp</th><th>Vence</th><th></th></tr></thead>
+          <thead><tr><th>Anuncio</th><th>Precio</th><th>Visitas</th><th>WhatsApp</th><th>Vence</th><th></th></tr></thead>
           <tbody>
             {approved.map((p) => (
               <tr key={p.id}>
                 <td><a href={`/propiedad/${p.slug}`} target="_blank">{p.title}</a><br /><span className="muted small">{p.colonia}</span></td>
+                <td>
+                  <form action={setPrice} className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <input name="price" defaultValue={p.price ?? ""} inputMode="numeric" aria-label="Precio" style={{ width: 110, padding: "6px 8px" }} />
+                    <button className="btn btn-small btn-ghost" title={`Ahora: ${formatPrice(p.price, p.operation)}`}>Guardar</button>
+                  </form>
+                  <span className="muted small">{formatPrice(p.price, p.operation)}</span>
+                </td>
                 <td>{p.views}</td><td>{p.wa_clicks}</td>
                 <td>{formatDate(new Date(new Date(p.confirmed_at).getTime() + 90 * 86_400_000))}</td>
                 <td className="row">
