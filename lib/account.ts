@@ -13,8 +13,8 @@ export type Account = { email_norm: string; email: string; whatsapp: string | nu
 const pepper = () => process.env.SESSION_SECRET || process.env.ADMIN_PASSWORD || "inm";
 const codeHash = (emailNorm: string, code: string) => sha256(`${emailNorm}|${code}|${pepper()}`);
 
-/** Crea un código de 6 dígitos. Lanza "rate" si se piden demasiados. */
-export async function createCode(emailNorm: string, ipHash: string): Promise<string> {
+/** Registra una petición de código y aplica límites (por identidad, por IP y tope diario de SMS). Lanza "rate" o "daily". */
+export async function noteCodeRequest(emailNorm: string, ipHash: string, codeH = "otp"): Promise<void> {
   const [{ a, b }] = await query<{ a: number; b: number }>(
     `SELECT COUNT(*) FILTER (WHERE email_norm = $1 AND created_at > now() - interval '10 minutes')::int AS a,
             COUNT(*) FILTER (WHERE ip_hash = $2 AND created_at > now() - interval '1 hour')::int AS b
@@ -27,11 +27,16 @@ export async function createCode(emailNorm: string, ipHash: string): Promise<str
     const [{ d }] = await query<{ d: number }>(`SELECT COUNT(*)::int AS d FROM email_codes WHERE email_norm LIKE 'tel:%' AND created_at > now() - interval '24 hours'`);
     if (d >= SMS_DAILY_MAX) throw new Error("daily");
   }
-  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   await query(
     `INSERT INTO email_codes (email_norm, code_hash, ip_hash, expires_at) VALUES ($1,$2,$3, now() + ($4 || ' minutes')::interval)`,
-    [emailNorm, codeHash(emailNorm, code), ipHash, String(CODE_MINUTES)],
+    [emailNorm, codeH, ipHash, String(CODE_MINUTES)],
   );
+}
+
+/** Crea un código de 6 dígitos (correo). Lanza "rate" si se piden demasiados. */
+export async function createCode(emailNorm: string, ipHash: string): Promise<string> {
+  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  await noteCodeRequest(emailNorm, ipHash, codeHash(emailNorm, code));
   return code;
 }
 

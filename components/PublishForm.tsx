@@ -64,14 +64,14 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
     const id = setTimeout(() => setCool((c) => c - 1), 1000);
     return () => clearTimeout(id);
   }, [cool]);
-  async function sendCode() {
+  async function sendCode(ch?: "whatsapp" | "voice") {
     setAuthMsg("");
     const el = formRef.current?.querySelector<HTMLInputElement>('input[name="email_new"]');
     if (sms && mailIn.replace(/\D/g, "").length < 10) { setAuthMsg(t("Escribe tu celular a 10 dígitos.", "Enter your 10-digit phone.")); return; }
     if (el && !el.checkValidity()) { el.reportValidity(); return; }
     setAuthBusy(true);
     try {
-      const res = await fetch("/api/cuenta/codigo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sms ? { phone: mailIn } : { email: mailIn }) });
+      const res = await fetch("/api/cuenta/codigo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sms ? { phone: mailIn, channel: ch } : { email: mailIn }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || t("No pudimos enviar el código.", "We could not send the code."));
       setCodeSent(true); setCodeIn(""); setCool(30);
@@ -466,7 +466,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
                 <small className="muted">{sms ? t("Solo esta vez: te mandamos un SMS con un código para confirmar que es tuyo. Después este dispositivo te recuerda y publicar es de un toque.", "Just this once: we text you a code to confirm it is yours. After that this device remembers you and posting takes one tap.") : t("Solo esta vez: te mandamos un código para confirmar que es tuyo. Después este dispositivo te recuerda y publicar es de un toque.", "Just this once: we email you a code to confirm it is yours. After that this device remembers you and posting takes one tap.")}</small>
               </label>
               {!codeSent ? (
-                <button type="button" className="btn btn-small" onClick={sendCode} disabled={authBusy || !mailIn}>{authBusy ? t("Enviando…", "Sending…") : sms ? t("Enviarme el código por SMS", "Text me the code") : t("Enviarme el código", "Email me the code")}</button>
+                <button type="button" className="btn btn-small" onClick={() => sendCode()} disabled={authBusy || !mailIn}>{authBusy ? t("Enviando…", "Sending…") : sms ? t("Enviarme el código por SMS", "Text me the code") : t("Enviarme el código", "Email me the code")}</button>
               ) : (
                 <div className="stack">
                   <label>{t("Código de 6 dígitos", "6-digit code")}
@@ -475,7 +475,9 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
                     <small className="muted">{sms ? t("Te llega por SMS en unos segundos. Vence en 10 minutos.", "It arrives by SMS in a few seconds. It expires in 10 minutes.") : t("Revisa tu correo (y la carpeta de spam). Vence en 10 minutos.", "Check your inbox (and spam). It expires in 10 minutes.")}</small>
                   </label>
                   <div className="row">
-                    <button type="button" className="linklike small" onClick={sendCode} disabled={cool > 0 || authBusy}>{cool > 0 ? t(`Reenviar en ${cool} s`, `Resend in ${cool}s`) : t("Reenviar código", "Resend code")}</button>
+                    <button type="button" className="linklike small" onClick={() => sendCode()} disabled={cool > 0 || authBusy}>{cool > 0 ? t(`Reenviar en ${cool} s`, `Resend in ${cool}s`) : t("Reenviar código", "Resend code")}</button>
+                    {sms && <button type="button" className="linklike small" onClick={() => sendCode("whatsapp")} disabled={cool > 0 || authBusy}>{t("No llegó: por WhatsApp", "Not received: via WhatsApp")}</button>}
+                    {sms && <button type="button" className="linklike small" onClick={() => sendCode("voice")} disabled={cool > 0 || authBusy}>{t("o por llamada", "or by call")}</button>}
                     <button type="button" className="linklike small" onClick={() => { setCodeSent(false); setAuthMsg(""); }}>{sms ? t("Cambiar número", "Change number") : t("Cambiar correo", "Change email")}</button>
                   </div>
                 </div>

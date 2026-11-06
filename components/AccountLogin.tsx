@@ -12,9 +12,9 @@ export default function AccountLogin({ sms = false }: { sms?: boolean }) {
   const [cool, setCool] = useState(0);
   useEffect(() => { if (cool > 0) { const id = setTimeout(() => setCool((c) => c - 1), 1000); return () => clearTimeout(id); } }, [cool]);
 
-  async function send(e?: React.FormEvent) {
+  async function send(e?: React.FormEvent, ch?: "whatsapp" | "voice") {
     e?.preventDefault(); setBusy(true); setMsg("");
-    const res = await fetch("/api/cuenta/codigo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sms ? { phone: email } : { email }) });
+    const res = await fetch("/api/cuenta/codigo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sms ? { phone: email, channel: ch } : { email }) });
     const j = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) return setMsg(j.error || "No pudimos enviar el código.");
@@ -47,6 +47,8 @@ export default function AccountLogin({ sms = false }: { sms?: boolean }) {
           </label>
           <div className="row">
             <button type="button" className="linklike small" disabled={cool > 0 || busy} onClick={() => send()}>{cool > 0 ? `Reenviar en ${cool} s` : "Reenviar código"}</button>
+            {sms && <button type="button" className="linklike small" disabled={cool > 0 || busy} onClick={() => send(undefined, "whatsapp")}>No llegó: por WhatsApp</button>}
+            {sms && <button type="button" className="linklike small" disabled={cool > 0 || busy} onClick={() => send(undefined, "voice")}>o por llamada</button>}
             <button type="button" className="linklike small" onClick={() => { setSent(false); setMsg(""); }}>{sms ? "Cambiar número" : "Cambiar correo"}</button>
           </div>
         </div>
