@@ -138,8 +138,14 @@ function sanitize(text: string): string {
 
 export async function POST(req: Request) {
   if (!aiEnabled()) return NextResponse.json({ error: "El asistente de redacción aún no está disponible." }, { status: 503 });
-  const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+  const raw = await req.json().catch(() => null);
+  // Los campos que no existen en el formulario (p. ej. los de hospedaje en una casa) llegan como null: se tratan como vacíos.
+  const body = raw && typeof raw === "object" ? Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== null)) : raw;
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    console.warn("ia/sugerir inválido:", parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".")}: ${i.message}`).join("; "));
+    return NextResponse.json({ error: `Datos inválidos${parsed.error.issues[0]?.path.length ? ` (${parsed.error.issues[0].path.join(".")})` : ""}` }, { status: 400 });
+  }
   const d = parsed.data;
   if (!(await aiAllowed(clientIpHash(req)))) return NextResponse.json({ error: "Usaste el asistente varias veces seguidas. Intenta más tarde." }, { status: 429 });
 
