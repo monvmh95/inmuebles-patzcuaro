@@ -48,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
             <div className="small">
               <Link href="/guias/como-evitar-fraudes-al-rentar">Cómo evitar fraudes al rentar</Link><br />
+              <Link href="/guias">Guías</Link><br />
               <Link href="/guias/colonias">Colonias de {CITY}</Link><br />
               <Link href="/verificacion">Qué es “Verificado”</Link><br />
               <Link href="/terminos">Términos</Link> · <Link href="/privacidad">Privacidad</Link>

@@ -52,6 +52,12 @@ const SCHEMA = [
   `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check`,
   `ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_type_check2`,
   `ALTER TABLE properties ADD CONSTRAINT properties_type_check2 CHECK (type IN ('casa','departamento','terreno','local','cuarto','bodega','huerta'))`,
+  `CREATE TABLE IF NOT EXISTS colonia_content (
+    colonia_slug TEXT PRIMARY KEY,
+    name         TEXT NOT NULL,
+    intro        TEXT NOT NULL DEFAULT '',
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`,
   `CREATE INDEX IF NOT EXISTS idx_properties_listing ON properties (status, operation, type, colonia_slug, approved_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_properties_ip ON properties (ip_hash, created_at)`,
   `CREATE TABLE IF NOT EXISTS reports (

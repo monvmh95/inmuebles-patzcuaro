@@ -18,11 +18,15 @@ export function GET() {
 - [Propiedades en venta](${SITE_URL}/venta): casas, terrenos y locales en venta.
 - [Colonias de ${CITY}](${SITE_URL}/guias/colonias): zonas con anuncios disponibles.
 - [Cómo evitar fraudes al rentar](${SITE_URL}/guias/como-evitar-fraudes-al-rentar): recomendaciones prácticas.
+- [Guías](${SITE_URL}/guias): comprar terreno, rentar por temporada y vivir en ${CITY}.
+- [Mapa](${SITE_URL}/mapa): propiedades por zona aproximada.
+- [Qué significa “Verificado”](${SITE_URL}/verificacion): qué revisa el sitio y qué no garantiza.
 - [Publicar una propiedad](${SITE_URL}/publicar): gratis, sin crear cuenta.
 
 ## Estructura de URLs
 - /renta/casas/centro, /venta/terrenos/<colonia>: listados por operación, tipo y colonia.
 - /propiedad/<slug>: ficha individual.
+- /colonias/<colonia>: página de cada colonia con texto editorial y anuncios.
 
 ## Notas
 - Los precios están en pesos mexicanos (MXN). Las rentas son mensuales salvo que el anuncio indique otra cosa.

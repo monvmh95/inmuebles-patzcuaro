@@ -258,3 +258,4 @@ a.verified:hover { background: #eef6f3; color: var(--accent); }
 .view-toggle a { padding: 6px 14px; border-radius: 999px; text-decoration: none; font-weight: 650; font-size: .9rem; color: var(--muted); }
 .view-toggle a[aria-current=page] { background: var(--brand); color: #fff; }
 .fav-inline { flex: none; border: 1px solid var(--line); }
+

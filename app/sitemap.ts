@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { OPERATIONS, SITE_URL, TYPES, type Operation, type PropType } from "@/lib/config";
 import { hasDb } from "@/lib/db";
 import { listAllSlugs, listLandingCombos } from "@/lib/properties";
+import { listColoniaSlugsWithContent } from "@/lib/colonias";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "daily", priority: 1 },
     { url: `${SITE_URL}/publicar`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}/guias/como-evitar-fraudes-al-rentar`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${SITE_URL}/guias`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${SITE_URL}/guias/comprar-terreno-en-patzcuaro`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${SITE_URL}/guias/rentar-por-temporada-en-patzcuaro`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${SITE_URL}/guias/vivir-en-patzcuaro`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}/mapa`, changeFrequency: "daily", priority: 0.6 },
     { url: `${SITE_URL}/verificacion`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/guias/colonias`, changeFrequency: "weekly", priority: 0.7 },
@@ -27,6 +32,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         if (!seen.has(path)) { seen.add(path); out.push({ url: `${SITE_URL}${path}`, lastModified: now, changeFrequency: "daily", priority: 0.7 }); }
       }
     }
+    const cols = await listColoniaSlugsWithContent().catch(() => []);
+    for (const c of cols) out.push({ url: `${SITE_URL}/colonias/${c.colonia_slug}`, lastModified: new Date(c.updated_at), changeFrequency: "monthly", priority: 0.7 });
     for (const s of slugs) out.push({ url: `${SITE_URL}/propiedad/${s.slug}`, lastModified: new Date(s.updated), changeFrequency: "weekly", priority: 0.6 });
   } catch (e) {
     console.error("[sitemap]", e);

@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { checkPassword, clearAdminCookie, isAdmin, setAdminCookie } from "@/lib/admin";
 import { query } from "@/lib/db";
 import { scheduleKing } from "@/lib/king";
-import { randomId } from "@/lib/util";
+import { randomId, slugify } from "@/lib/util";
+import { saveColoniaContent } from "@/lib/colonias";
 
 async function guard() {
   if (!(await isAdmin())) redirect("/admin");
@@ -62,5 +63,15 @@ export async function resolveReport(fd: FormData) {
 export async function grantKing(fd: FormData) {
   await guard();
   await scheduleKing(id(fd), `admin-${randomId(6)}`, "admin");
+  refresh();
+}
+
+export async function saveColonia(fd: FormData) {
+  await guard();
+  const name = String(fd.get("name") ?? "").trim().slice(0, 60);
+  const intro = String(fd.get("intro") ?? "").trim().slice(0, 4000);
+  const slug = slugify(String(fd.get("slug") || name));
+  if (!name || !slug) return;
+  await saveColoniaContent(slug, name, intro);
   refresh();
 }

@@ -3,6 +3,8 @@ import { adminConfigured, isAdmin } from "@/lib/admin";
 import { hasDb, query } from "@/lib/db";
 import { KING_ENABLED, OPERATIONS, TYPES } from "@/lib/config";
 import { formatDate, formatPrice } from "@/lib/util";
+import { saveColonia } from "./actions";
+import { listColoniaContent } from "@/lib/colonias";
 import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +39,7 @@ export default async function Admin() {
     return <div className="notice"><h1>Administración</h1><p>Conecta la base de datos (Neon) para empezar a moderar.</p><form action={logout}><button className="btn btn-small">Salir</button></form></div>;
   }
 
-  const [pending, approved, reports, stats, slots] = await Promise.all([
+  const [pending, approved, reports, stats, slots, colContent, colList] = await Promise.all([
     query<Row>(`SELECT * FROM properties WHERE status='pending' ORDER BY id ASC LIMIT 50`),
     query<Row>(`SELECT * FROM properties WHERE status='approved' ORDER BY approved_at DESC NULLS LAST LIMIT 40`),
     query<{ id: number; reason: string; created_at: string; slug: string; title: string }>(
@@ -46,7 +48,11 @@ export default async function Admin() {
       `SELECT status, COUNT(*)::int AS total, COALESCE(SUM(views),0)::int AS views, COALESCE(SUM(wa_clicks),0)::int AS clicks FROM properties GROUP BY status`),
     query<{ title: string; starts_at: string; ends_at: string; source: string }>(
       `SELECT p.title, k.starts_at, k.ends_at, k.source FROM king_slots k JOIN properties p ON p.id=k.property_id WHERE k.ends_at > now() ORDER BY k.starts_at LIMIT 20`),
+    listColoniaContent(),
+    query<{ colonia: string; colonia_slug: string }>(`SELECT MIN(colonia) AS colonia, colonia_slug FROM properties GROUP BY colonia_slug ORDER BY colonia_slug`),
   ]);
+  const contentBySlug = new Map(colContent.map((c) => [c.colonia_slug, c]));
+  const coloniaRows = [...new Map([...colList.map((c) => [c.colonia_slug, { slug: c.colonia_slug, name: c.colonia }] as const), ...colContent.map((c) => [c.colonia_slug, { slug: c.colonia_slug, name: c.name }] as const)]).values()];
   const by = Object.fromEntries(stats.map((s) => [s.status, s]));
   const totalViews = stats.reduce((a, s) => a + s.views, 0);
   const totalClicks = stats.reduce((a, s) => a + s.clicks, 0);
@@ -132,6 +138,33 @@ export default async function Admin() {
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section>
+        <h2>Textos de colonias</h2>
+        <p className="muted small">Escribe tú el texto (mínimo ~80 caracteres) de cada colonia que conozcas. Sin texto la página no se indexa en Google. Separa párrafos con una línea en blanco; solo escribe lo que te conste.</p>
+        {coloniaRows.map((c) => {
+          const ct = contentBySlug.get(c.slug);
+          return (
+            <details key={c.slug} className="faq" style={{ marginBottom: 8 }}>
+              <summary>{c.name} {ct && ct.intro.trim().length >= 80 ? "✓" : "(sin texto)"}</summary>
+              <form action={saveColonia} className="form" style={{ marginTop: 10 }}>
+                <input type="hidden" name="slug" value={c.slug} />
+                <label>Nombre<input name="name" defaultValue={c.name} required maxLength={60} /></label>
+                <label>Texto<textarea name="intro" rows={7} maxLength={4000} defaultValue={ct?.intro ?? ""} /></label>
+                <button className="btn btn-small">Guardar</button>
+              </form>
+            </details>
+          );
+        })}
+        <details className="faq">
+          <summary>+ Agregar otra colonia</summary>
+          <form action={saveColonia} className="form" style={{ marginTop: 10 }}>
+            <label>Nombre<input name="name" required maxLength={60} /></label>
+            <label>Texto<textarea name="intro" rows={7} maxLength={4000} /></label>
+            <button className="btn btn-small">Guardar</button>
+          </form>
+        </details>
       </section>
 
       {slots.length > 0 && (

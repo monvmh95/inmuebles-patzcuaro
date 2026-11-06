@@ -23,7 +23,7 @@ export default async function Colonias() {
         <ul>
           {colonias.map((c) => (
             <li key={c.colonia_slug}>
-              <strong>{c.colonia}</strong> ({c.total}) — <Link href={`/renta/casas/${c.colonia_slug}`}>casas en renta</Link>, <Link href={`/venta/casas/${c.colonia_slug}`}>casas en venta</Link>, <Link href={`/venta/terrenos/${c.colonia_slug}`}>terrenos</Link>
+              <strong><Link href={`/colonias/${c.colonia_slug}`}>{c.colonia}</Link></strong> ({c.total}) — <Link href={`/renta/casas/${c.colonia_slug}`}>casas en renta</Link>, <Link href={`/venta/casas/${c.colonia_slug}`}>casas en venta</Link>, <Link href={`/venta/terrenos/${c.colonia_slug}`}>terrenos</Link>
             </li>
           ))}
         </ul>
