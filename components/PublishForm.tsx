@@ -48,7 +48,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
     setPhotos((p) => { const a = [...p]; const [m] = a.splice(from, 1); a.splice(to, 0, m); return a; });
   }
   // Cuenta: se confirma el correo UNA vez (código de 6 dígitos) y el dispositivo se recuerda.
-  type Acct = { enabled: boolean; email: string | null; whatsapp: string | null; owner_kind: string | null };
+  type Acct = { enabled: boolean; channel?: "sms" | "email" | null; email: string | null; whatsapp: string | null; owner_kind: string | null };
   const [acct, setAcct] = useState<Acct | null>(null);
   const [mailIn, setMailIn] = useState("");
   const [codeSent, setCodeSent] = useState(false);
@@ -67,10 +67,11 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
   async function sendCode() {
     setAuthMsg("");
     const el = formRef.current?.querySelector<HTMLInputElement>('input[name="email_new"]');
+    if (sms && mailIn.replace(/\D/g, "").length < 10) { setAuthMsg(t("Escribe tu celular a 10 dígitos.", "Enter your 10-digit phone.")); return; }
     if (el && !el.checkValidity()) { el.reportValidity(); return; }
     setAuthBusy(true);
     try {
-      const res = await fetch("/api/cuenta/codigo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: mailIn }) });
+      const res = await fetch("/api/cuenta/codigo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sms ? { phone: mailIn } : { email: mailIn }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || t("No pudimos enviar el código.", "We could not send the code."));
       setCodeSent(true); setCodeIn(""); setCool(30);
@@ -80,10 +81,10 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
   async function verifyCode(code: string) {
     setAuthMsg(""); setAuthBusy(true);
     try {
-      const res = await fetch("/api/cuenta/verificar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: mailIn, code }) });
+      const res = await fetch("/api/cuenta/verificar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sms ? { phone: mailIn, code } : { email: mailIn, code }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || t("Código incorrecto.", "Wrong code."));
-      setAcct({ enabled: true, email: j.email, whatsapp: j.whatsapp, owner_kind: j.owner_kind }); setCodeSent(false); setCodeIn("");
+      setAcct({ enabled: true, channel: j.channel, email: j.email, whatsapp: j.whatsapp, owner_kind: j.owner_kind }); setCodeSent(false); setCodeIn("");
     } catch (e) { setAuthMsg(e instanceof Error ? e.message : t("Error al verificar.", "Verification error.")); setCodeIn(""); }
     finally { setAuthBusy(false); }
   }
@@ -91,6 +92,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
     await fetch("/api/cuenta/salir", { method: "POST" }).catch(() => {});
     setAcct((a) => (a ? { ...a, email: null, whatsapp: null, owner_kind: null } : a)); setMailIn(""); setCodeSent(false);
   }
+  const sms = acct?.channel === "sms";
   const needsMail = Boolean(acct?.enabled && !acct.email);
 
   const [priceDigits, setPriceDigits] = useState("");
@@ -245,7 +247,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         return;
       }
     }
-    if (needsMail) { setError(t("Confirma tu correo con el código para poder publicar.", "Confirm your email with the code to publish.")); return; }
+    if (needsMail) { setError(sms ? t("Confirma tu celular con el código para poder publicar.", "Confirm your phone with the code to publish.") : t("Confirma tu correo con el código para poder publicar.", "Confirm your email with the code to publish.")); return; }
     setBusy(true);
     const fd = new FormData(e.currentTarget);
     const body = {
@@ -454,27 +456,27 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
           acct.email ? (
             <div className="acct-box">
               <p style={{ margin: 0 }}>✓ {t("Publicas como", "Posting as")} <strong>{acct.email}</strong></p>
-              <button type="button" className="linklike small" onClick={notMe}>{t("No soy yo / usar otro correo", "Not me / use another email")}</button>
-              <input type="hidden" name="email" value={acct.email} />
+              <button type="button" className="linklike small" onClick={notMe}>{sms ? t("No soy yo / usar otro número", "Not me / use another number") : t("No soy yo / usar otro correo", "Not me / use another email")}</button>
+              <input type="hidden" name="email" value={sms ? "" : acct.email} />
             </div>
           ) : (
             <div className="acct-box">
-              <label>{t("Tu correo (no se muestra)", "Your email (not shown)")}
-                <input name="email_new" type="email" maxLength={120} autoComplete="email" placeholder="tu@correo.com" value={mailIn} onChange={(e) => setMailIn(e.target.value)} disabled={codeSent} />
-                <small className="muted">{t("Solo esta vez: te mandamos un código para confirmar que es tuyo. Después este dispositivo te recuerda y publicar es de un toque.", "Just this once: we email you a code to confirm it is yours. After that this device remembers you and posting takes one tap.")}</small>
+              <label>{sms ? t("Tu celular (el mismo de WhatsApp)", "Your phone (same as WhatsApp)") : t("Tu correo (no se muestra)", "Your email (not shown)")}
+                <input name="email_new" type={sms ? "tel" : "email"} inputMode={sms ? "tel" : "email"} maxLength={sms ? 25 : 120} autoComplete={sms ? "tel-national" : "email"} placeholder={sms ? "434 123 4567" : "tu@correo.com"} value={mailIn} onChange={(e) => setMailIn(e.target.value)} disabled={codeSent} />
+                <small className="muted">{sms ? t("Solo esta vez: te mandamos un SMS con un código para confirmar que es tuyo. Después este dispositivo te recuerda y publicar es de un toque.", "Just this once: we text you a code to confirm it is yours. After that this device remembers you and posting takes one tap.") : t("Solo esta vez: te mandamos un código para confirmar que es tuyo. Después este dispositivo te recuerda y publicar es de un toque.", "Just this once: we email you a code to confirm it is yours. After that this device remembers you and posting takes one tap.")}</small>
               </label>
               {!codeSent ? (
-                <button type="button" className="btn btn-small" onClick={sendCode} disabled={authBusy || !mailIn}>{authBusy ? t("Enviando…", "Sending…") : t("Enviarme el código", "Email me the code")}</button>
+                <button type="button" className="btn btn-small" onClick={sendCode} disabled={authBusy || !mailIn}>{authBusy ? t("Enviando…", "Sending…") : sms ? t("Enviarme el código por SMS", "Text me the code") : t("Enviarme el código", "Email me the code")}</button>
               ) : (
                 <div className="stack">
                   <label>{t("Código de 6 dígitos", "6-digit code")}
                     <input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]*" maxLength={6} placeholder="••••••" value={codeIn} autoFocus
                       onChange={(e) => { const v = e.target.value.replace(/\D/g, "").slice(0, 6); setCodeIn(v); if (v.length === 6) verifyCode(v); }} style={{ letterSpacing: 6, fontSize: "1.3rem", maxWidth: 200 }} />
-                    <small className="muted">{t("Revisa tu correo (y la carpeta de spam). Vence en 10 minutos.", "Check your inbox (and spam). It expires in 10 minutes.")}</small>
+                    <small className="muted">{sms ? t("Te llega por SMS en unos segundos. Vence en 10 minutos.", "It arrives by SMS in a few seconds. It expires in 10 minutes.") : t("Revisa tu correo (y la carpeta de spam). Vence en 10 minutos.", "Check your inbox (and spam). It expires in 10 minutes.")}</small>
                   </label>
                   <div className="row">
                     <button type="button" className="linklike small" onClick={sendCode} disabled={cool > 0 || authBusy}>{cool > 0 ? t(`Reenviar en ${cool} s`, `Resend in ${cool}s`) : t("Reenviar código", "Resend code")}</button>
-                    <button type="button" className="linklike small" onClick={() => { setCodeSent(false); setAuthMsg(""); }}>{t("Cambiar correo", "Change email")}</button>
+                    <button type="button" className="linklike small" onClick={() => { setCodeSent(false); setAuthMsg(""); }}>{sms ? t("Cambiar número", "Change number") : t("Cambiar correo", "Change email")}</button>
                   </div>
                 </div>
               )}

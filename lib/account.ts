@@ -2,6 +2,7 @@ import { randomInt } from "crypto";
 import { cookies } from "next/headers";
 import { query } from "./db";
 import { newToken, normalizeEmail, sha256 } from "./util";
+import { SMS_DAILY_MAX } from "./sms";
 
 export const SESSION_COOKIE = "inm_sess";
 const SESSION_DAYS = 180; // "recordar este dispositivo": se renueva cada vez que entras
@@ -21,6 +22,11 @@ export async function createCode(emailNorm: string, ipHash: string): Promise<str
     [emailNorm, ipHash],
   );
   if (a >= 3 || b >= 12) throw new Error("rate");
+  if (emailNorm.startsWith("tel:")) {
+    // Cada SMS cuesta: tope diario global para que nadie agote los créditos.
+    const [{ d }] = await query<{ d: number }>(`SELECT COUNT(*)::int AS d FROM email_codes WHERE email_norm LIKE 'tel:%' AND created_at > now() - interval '24 hours'`);
+    if (d >= SMS_DAILY_MAX) throw new Error("daily");
+  }
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   await query(
     `INSERT INTO email_codes (email_norm, code_hash, ip_hash, expires_at) VALUES ($1,$2,$3, now() + ($4 || ' minutes')::interval)`,
@@ -43,12 +49,16 @@ export async function verifyCode(emailNorm: string, code: string): Promise<boole
   return true;
 }
 
-export async function startSession(emailRaw: string): Promise<Account> {
-  const email_norm = normalizeEmail(emailRaw);
+/** Clave de identidad: correo normalizado, o "tel:<10 dígitos>" cuando se confirmó por SMS. */
+export const identKey = (kind: "email" | "sms", v: string) => (kind === "sms" ? `tel:${v}` : normalizeEmail(v));
+export const isTelKey = (k: string) => k.startsWith("tel:");
+
+export async function startSession(emailRaw: string, kind: "email" | "sms" = "email"): Promise<Account> {
+  const email_norm = identKey(kind, emailRaw);
   const acc = await query<Account>(
-    `INSERT INTO accounts (email_norm, email) VALUES ($1,$2)
+    `INSERT INTO accounts (email_norm, email, whatsapp) VALUES ($1,$2,$3)
      ON CONFLICT (email_norm) DO UPDATE SET last_login_at = now() RETURNING email_norm, email, whatsapp, owner_kind`,
-    [email_norm, emailRaw.trim()],
+    [email_norm, kind === "sms" ? emailRaw : emailRaw.trim(), kind === "sms" ? emailRaw : null],
   );
   const { token, hash } = newToken();
   await query(`INSERT INTO sessions (token_hash, email_norm, expires_at) VALUES ($1,$2, now() + ($3 || ' days')::interval)`, [hash, email_norm, String(SESSION_DAYS)]);

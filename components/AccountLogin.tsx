@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function AccountLogin() {
+export default function AccountLogin({ sms = false }: { sms?: boolean }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -14,7 +14,7 @@ export default function AccountLogin() {
 
   async function send(e?: React.FormEvent) {
     e?.preventDefault(); setBusy(true); setMsg("");
-    const res = await fetch("/api/cuenta/codigo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) });
+    const res = await fetch("/api/cuenta/codigo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sms ? { phone: email } : { email }) });
     const j = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) return setMsg(j.error || "No pudimos enviar el código.");
@@ -22,7 +22,7 @@ export default function AccountLogin() {
   }
   async function verify(c: string) {
     setBusy(true); setMsg("");
-    const res = await fetch("/api/cuenta/verificar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, code: c }) });
+    const res = await fetch("/api/cuenta/verificar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sms ? { phone: email, code: c } : { email, code: c }) });
     const j = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) { setMsg(j.error || "Código incorrecto."); setCode(""); return; }
@@ -32,10 +32,10 @@ export default function AccountLogin() {
   return (
     <div className="stack" style={{ maxWidth: 460 }}>
       <h1>Mis anuncios</h1>
-      <p className="muted">Entra con el correo que usaste al publicar. Te mandamos un código de 6 dígitos; solo la primera vez en cada dispositivo.</p>
+      <p className="muted">{sms ? "Entra con el celular que usaste al publicar. Te mandamos un SMS con un código de 6 dígitos; solo la primera vez en cada dispositivo." : "Entra con el correo que usaste al publicar. Te mandamos un código de 6 dígitos; solo la primera vez en cada dispositivo."}</p>
       {!sent ? (
         <form onSubmit={send} className="form stack">
-          <label>Tu correo<input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="tu@correo.com" /></label>
+          <label>{sms ? "Tu celular" : "Tu correo"}<input type={sms ? "tel" : "email"} inputMode={sms ? "tel" : "email"} required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete={sms ? "tel-national" : "email"} placeholder={sms ? "434 123 4567" : "tu@correo.com"} /></label>
           <button className="btn" disabled={busy || !email}>{busy ? "Enviando…" : "Enviarme el código"}</button>
         </form>
       ) : (
@@ -43,11 +43,11 @@ export default function AccountLogin() {
           <label>Código de 6 dígitos
             <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} autoFocus placeholder="••••••" style={{ letterSpacing: 6, fontSize: "1.3rem", maxWidth: 200 }}
               onChange={(e) => { const v = e.target.value.replace(/\D/g, "").slice(0, 6); setCode(v); if (v.length === 6) verify(v); }} />
-            <small className="muted">Enviado a {email}. Revisa también spam. Vence en 10 minutos.</small>
+            <small className="muted">Enviado a {email}. {sms ? "" : "Revisa también spam. "}Vence en 10 minutos.</small>
           </label>
           <div className="row">
             <button type="button" className="linklike small" disabled={cool > 0 || busy} onClick={() => send()}>{cool > 0 ? `Reenviar en ${cool} s` : "Reenviar código"}</button>
-            <button type="button" className="linklike small" onClick={() => { setSent(false); setMsg(""); }}>Cambiar correo</button>
+            <button type="button" className="linklike small" onClick={() => { setSent(false); setMsg(""); }}>{sms ? "Cambiar número" : "Cambiar correo"}</button>
           </div>
         </div>
       )}

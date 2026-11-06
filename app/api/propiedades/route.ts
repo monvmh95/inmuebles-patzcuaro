@@ -8,7 +8,8 @@ import { SITE_URL } from "@/lib/config";
 import { parseLand } from "@/lib/measures";
 import { FEATURE_KEYS, cleanFeatures } from "@/lib/features";
 import { checkPublisher } from "@/lib/publishers";
-import { getSession } from "@/lib/account";
+import { getSession, isTelKey } from "@/lib/account";
+import { smsEnabled } from "@/lib/sms";
 import { mailEnabled } from "@/lib/mail";
 
 export const runtime = "nodejs";
@@ -56,16 +57,19 @@ export async function POST(req: Request) {
   const phone = normalizeMxPhone(d.whatsapp);
   if (!phone) return NextResponse.json({ error: "El WhatsApp debe tener 10 dígitos (ej. 434 123 4567)." }, { status: 400 });
 
-  // Con correo configurado, publicar exige un correo confirmado (sesión). Si no, solo se pide el correo.
+  // Con verificación activa (SMS o correo), publicar exige una sesión confirmada. Si no, solo se pide el correo.
+  const verifyOn = smsEnabled() || mailEnabled();
+  const session = verifyOn ? await getSession().catch(() => null) : null;
   let email = d.email ?? "";
-  const session = mailEnabled() ? await getSession().catch(() => null) : null;
-  if (mailEnabled()) {
-    if (!session) return NextResponse.json({ error: "Confirma tu correo con el código para poder publicar." }, { status: 401 });
-    email = session.email;
-  } else if (!email) {
-    return NextResponse.json({ error: "Escribe un correo válido (lo usamos para confirmar tu anuncio; no se muestra)." }, { status: 400 });
+  let emailNorm: string;
+  if (verifyOn) {
+    if (!session) return NextResponse.json({ error: "Confirma tu celular con el código para poder publicar." }, { status: 401 });
+    emailNorm = session.email_norm;
+    email = isTelKey(emailNorm) ? "" : session.email;
+  } else {
+    if (!email) return NextResponse.json({ error: "Escribe un correo válido (lo usamos para confirmar tu anuncio; no se muestra)." }, { status: 400 });
+    emailNorm = normalizeEmail(email);
   }
-  const emailNorm = normalizeEmail(email);
   const chk = await checkPublisher(phone, emailNorm);
   if (chk.blocked) return NextResponse.json({ error: "Esta persona no puede publicar por ahora. Si crees que es un error, escríbenos." }, { status: 403 });
   const limit = chk.limit, mine = chk.active;
