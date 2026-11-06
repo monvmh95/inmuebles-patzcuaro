@@ -96,3 +96,13 @@ export async function endSession(): Promise<void> {
   if (token) await query(`DELETE FROM sessions WHERE token_hash = $1`, [sha256(token)]).catch(() => {});
   jar.delete(SESSION_COOKIE);
 }
+
+/** Diagnóstico (sin datos sensibles): por qué una sesión no se reconoce. */
+export async function sessionWhy(): Promise<"ok" | "no_cookie" | "bad_cookie" | "no_row" | "expired"> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!token) return "no_cookie";
+  if (token.length > 80) return "bad_cookie";
+  const rows = await query<{ expired: boolean }>(`SELECT (expires_at <= now()) AS expired FROM sessions WHERE token_hash = $1`, [sha256(token)]);
+  if (!rows[0]) return "no_row";
+  return rows[0].expired ? "expired" : "ok";
+}

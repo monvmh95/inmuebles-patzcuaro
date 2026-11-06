@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession, isTelKey } from "@/lib/account";
+import { getSession, isTelKey, sessionWhy } from "@/lib/account";
 import { mailEnabled } from "@/lib/mail";
 import { smsEnabled } from "@/lib/sms";
 
@@ -15,5 +15,6 @@ export async function GET() {
       return NextResponse.json({ enabled: true, channel, error: true, email: null, whatsapp: null, owner_kind: null, tel: false }, { status: 503, headers: { "cache-control": "no-store" } });
     }
   }
-  return NextResponse.json({ enabled: Boolean(channel), channel, email: s?.email ?? null, whatsapp: s?.whatsapp ?? null, owner_kind: s?.owner_kind ?? null, tel: s ? isTelKey(s.email_norm) : false }, { headers: { "cache-control": "no-store" } });
+  const why = channel ? await sessionWhy().catch(() => "error") : null;
+  return NextResponse.json({ enabled: Boolean(channel), channel, why, email: s?.email ?? null, whatsapp: s?.whatsapp ?? null, owner_kind: s?.owner_kind ?? null, tel: s ? isTelKey(s.email_norm) : false }, { headers: { "cache-control": "no-store" } });
 }
