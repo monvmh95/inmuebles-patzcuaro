@@ -1,6 +1,7 @@
 import { CITY, OPERATIONS, SITE_NAME, SITE_URL, STATE, TYPES } from "./config";
 import type { Property } from "./properties";
 import { localizePath, opPlural, typeLabel, type Lang } from "./i18n";
+import { featureLabel } from "./features";
 
 export function propertyTitle(p: Pick<Property, "type" | "operation" | "colonia">, lang: Lang = "es") {
   return lang === "en"
@@ -25,6 +26,16 @@ export function propertyJsonLd(p: Property, lang: Lang = "es", text?: { title: s
       address: { "@type": "PostalAddress", addressLocality: CITY, addressRegion: STATE, addressCountry: "MX", streetAddress: p.colonia },
       ...(p.bedrooms != null ? { numberOfBedrooms: p.bedrooms } : {}),
       ...(p.bathrooms != null ? { numberOfBathroomsTotal: p.bathrooms } : {}),
+      ...(p.land_m2 != null ? { lotSize: { "@type": "QuantitativeValue", value: p.land_m2, unitCode: "MTK" } } : {}),
+      ...(p.features?.length
+        ? {
+            amenityFeature: p.features
+              .map((k) => featureLabel(k, lang === "en" ? "en" : "es"))
+              .filter((n): n is string => Boolean(n))
+              .map((name) => ({ "@type": "LocationFeatureSpecification", name, value: true })),
+            ...(p.features.includes("mascotas") ? { petsAllowed: true } : {}),
+          }
+        : {}),
       ...(p.built_m2 != null ? { floorSize: { "@type": "QuantitativeValue", value: p.built_m2, unitCode: "MTK" } } : {}),
     },
     ...(p.price != null

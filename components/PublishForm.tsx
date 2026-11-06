@@ -6,6 +6,7 @@ import { useLang } from "./LangProvider";
 import PropertyCard from "./PropertyCard";
 import LocationPicker from "./LocationPicker";
 import { parseLand } from "@/lib/measures";
+import { GROUP_LABEL, featuresFor, featureLabel, type Feature } from "@/lib/features";
 
 async function compress(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file);
@@ -41,6 +42,11 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ manageUrl: string } | null>(null);
   const [landIn, setLandIn] = useState("");
+  const [opSel, setOpSel] = useState<string>("renta");
+  const [typeSel, setTypeSel] = useState<string>("casa");
+  const [feat, setFeat] = useState<string[]>([]);
+  const avail = featuresFor(typeSel, opSel);
+  const chosen = () => feat.filter((k) => avail.some((f) => f.key === k));
   const landParsed = parseLand(landIn);
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [preview, setPreview] = useState<Parameters<typeof PropertyCard>[0]["p"] | null>(null);
@@ -102,7 +108,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         body: JSON.stringify({
           operation: fd.get("operation"), type: fd.get("type"), colonia: fd.get("colonia"), price: fd.get("price"),
           bedrooms: fd.get("bedrooms"), bathrooms: fd.get("bathrooms"), land_dims: fd.get("land_dims"), built_m2: fd.get("built_m2"),
-          lake_view: fd.get("lake_view") === "on", title: fd.get("title"), notes: fd.get("description"), photos: photos.slice(0, 3),
+          lake_view: fd.get("lake_view") === "on", title: fd.get("title"), notes: fd.get("notes"), features: chosen(), nearby: fd.get("nearby"), photos: photos.slice(0, 3),
         }),
       });
       const j = await res.json().catch(() => ({}));
@@ -111,6 +117,30 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
     } catch (e) {
       setAiMsg(e instanceof Error ? e.message : t("Error del asistente.", "Assistant error."));
     } finally { setAiBusy(false); }
+  }
+  function basicDraft() {
+    const f = formRef.current!;
+    const fd = new FormData(f);
+    const op = String(fd.get("operation") || "renta");
+    const ty = typeLabel("es", String(fd.get("type") || "casa") as PropType);
+    const col = String(fd.get("colonia") || "").trim();
+    const opTxt = op === "venta" ? "en venta" : op === "traspaso" ? "en traspaso" : "en renta";
+    const land = parseLand(fd.get("land_dims"));
+    const facts = [
+      num(fd.get("bedrooms")) != null && `${num(fd.get("bedrooms"))} recámaras`,
+      num(fd.get("bathrooms")) != null && `${num(fd.get("bathrooms"))} baños`,
+      land && `terreno de ${land.m2} m²${land.dims ? ` (${land.dims} m)` : ""}`,
+      num(fd.get("built_m2")) != null && `${num(fd.get("built_m2"))} m² de construcción`,
+      fd.get("lake_view") === "on" && "vista al lago",
+    ].filter(Boolean) as string[];
+    const lines = [`${ty} ${opTxt} en ${col ? col + ", " : ""}Pátzcuaro, Michoacán${facts.length ? `: ${facts.join(", ")}` : ""}.`];
+    const labels = chosen().map((k) => featureLabel(k, "es")).filter(Boolean) as string[];
+    if (labels.length) lines.push(`Características: ${labels.map((l) => l.toLowerCase()).join(", ")}.`);
+    const near = String(fd.get("nearby") || "").trim();
+    if (near) lines.push(`Ubicación: ${near}.`);
+    lines.push("Agenda tu visita escribiendo por WhatsApp desde este anuncio.");
+    const de = f.querySelector<HTMLTextAreaElement>('textarea[name="description"]');
+    if (de) de.value = lines.join("\n\n");
   }
   function useSugg() {
     if (!sugg) return;
@@ -161,7 +191,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
       land_dims: fd.get("land_dims"), built_m2: fd.get("built_m2"), owner_kind: fd.get("owner_kind"),
       whatsapp: fd.get("whatsapp"), email: fd.get("email"), website: fd.get("website"), lang,
       accept: fd.get("accept") === "on", photos,
-      lat: geo?.lat ?? null, lng: geo?.lng ?? null, lake_view: fd.get("lake_view") === "on",
+      lat: geo?.lat ?? null, lng: geo?.lng ?? null, lake_view: fd.get("lake_view") === "on", features: chosen(),
     };
     const res = await fetch("/api/propiedades", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const j = await res.json().catch(() => ({}));
@@ -199,12 +229,12 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
       <div data-step="0" hidden={step !== 0} className="stack">
         <div className="grid2">
           <label>{t("Operación", "Operation")}
-            <select name="operation" required defaultValue="renta">
+            <select name="operation" required defaultValue="renta" onChange={(e) => setOpSel(e.target.value)}>
               {(Object.keys(OPERATIONS) as Operation[]).map((k) => <option key={k} value={k}>{opLabel(lang, k)}</option>)}
             </select>
           </label>
           <label>{t("Tipo de inmueble", "Property type")}
-            <select name="type" required defaultValue="casa">
+            <select name="type" required defaultValue="casa" onChange={(e) => setTypeSel(e.target.value)}>
               {(Object.keys(TYPES) as PropType[]).map((k) => <option key={k} value={k}>{typeLabel(lang, k)}</option>)}
             </select>
           </label>
@@ -268,21 +298,46 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
           <legend>{t("Zona en el mapa (opcional)", "Area on the map (optional)")}</legend>
           <LocationPicker value={geo} onChange={setGeo} />
         </fieldset>
-        <label>{t("Descripción", "Description")}
-          <textarea name="description" required minLength={30} maxLength={3000} rows={7} placeholder={t("Estado de la propiedad, servicios, distancia al centro, condiciones de renta o venta (depósito, contrato, mascotas)…", "Condition of the property, utilities, distance to downtown, rental or sale terms (deposit, contract, pets)… The listing is published in Spanish; English readers see an automatic translation.")} />
+        <fieldset className="feats">
+          <legend>{t("Características principales", "Main features")}</legend>
+          <p className="muted small" style={{ margin: "0 0 10px" }}>{t("Marca solo lo que sí tiene. Con esto se arma tu descripción y aparece en tu anuncio.", "Tick only what it really has. This builds your description and appears on your listing.")}</p>
+          {(["servicios", "espacios", "zona", "condiciones"] as Feature["group"][]).map((g) => {
+            const items = avail.filter((f) => f.group === g);
+            if (!items.length) return null;
+            return (
+              <div key={g} className="feat-group">
+                <p className="feat-title">{GROUP_LABEL[g][lang]}</p>
+                <div className="feat-list">
+                  {items.map((f) => (
+                    <label key={f.key} className="feat">
+                      <input type="checkbox" checked={feat.includes(f.key)} onChange={(e) => setFeat((cur) => (e.target.checked ? [...cur, f.key] : cur.filter((k) => k !== f.key)))} />
+                      <span>{f[lang]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </fieldset>
+        <label>{t("Cerca de (opcional)", "Nearby (optional)")}
+          <input name="nearby" maxLength={250} placeholder={t("A 5 min a pie de la Plaza Vasco de Quiroga, junto al mercado…", "5 min walk from Plaza Vasco de Quiroga, next to the market…")} />
+          <small className="muted">{t("Lugares conocidos cercanos: ayudan a que te encuentren en Google.", "Well-known places nearby: they help people find you on Google.")}</small>
         </label>
         {aiEnabled && (
           <div className="ai-box">
-            <button type="button" className="btn btn-small btn-ghost" onClick={askAi} disabled={aiBusy || uploading}>
-              {aiBusy ? t("Pensando…", "Thinking…") : t("✨ Sugerir título y descripción", "✨ Suggest title and description")}
+            <label>{t("Algo más que quieras contar (opcional)", "Anything else you want to say (optional)")}
+              <textarea name="notes" rows={3} maxLength={1500} placeholder={t("Estado de la propiedad, depósito, mascotas, horarios para ver, lo que la hace especial… aunque sea en lista.", "Condition, deposit, pets, viewing hours, what makes it special… a bullet list is fine. You can write in English; the listing is written in Spanish.")} />
+            </label>
+            <button type="button" className="btn btn-small" onClick={askAi} disabled={aiBusy || uploading} style={{ marginTop: 10 }}>
+              {aiBusy ? t("Redactando…", "Writing…") : t("✨ Redactar mi anuncio", "✨ Write my listing")}
             </button>
             <p className="muted small" style={{ margin: "6px 0 0" }}>
-              {t("Escribe arriba unas notas rápidas (aunque sea en lista). El asistente las ordena junto con tus datos y fotos; tú revisas y decides. Solo usa lo que tú le dices o se ve claro en las fotos.", "Write a few quick notes above (a bullet list is fine). The assistant organizes them with your data and photos; you review and decide. It only uses what you tell it or what is clearly visible in the photos. It writes in Spanish, the site’s main language.")}
+              {t("El asistente escribe el título y la descripción con tus datos, características y fotos, pensados para que Google y los buscadores con IA te encuentren. Solo usa lo que tú marcaste o dijiste; tú revisas y decides.", "The assistant writes the title and description from your data, features and photos, built so Google and AI search can find you. It only uses what you ticked or said; you review and decide. It writes in Spanish, the site’s main language.")}
             </p>
             {aiMsg && <p className="error small" role="alert">{aiMsg}</p>}
             {sugg && (
               <div className="ai-sugg" role="region" aria-label={t("Sugerencia", "Suggestion")}>
-                <p className="small muted" style={{ margin: 0 }}>{t("Sugerencia (revísala antes de usarla):", "Suggestion (review it before using it):")}</p>
+                <p className="small muted" style={{ margin: 0 }}>{t("Propuesta (revísala antes de usarla):", "Proposal (review it before using it):")}</p>
                 <p style={{ margin: "6px 0", fontWeight: 700 }}>{sugg.titulo}</p>
                 <p style={{ margin: "0 0 8px", whiteSpace: "pre-line" }}>{sugg.descripcion}</p>
                 {sugg.preguntas.length > 0 && (
@@ -292,13 +347,17 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
                   </>
                 )}
                 <div className="row">
-                  <button type="button" className="btn btn-small" onClick={useSugg}>{t("Usar sugerencia", "Use suggestion")}</button>
+                  <button type="button" className="btn btn-small" onClick={useSugg}>{t("Usar título y descripción", "Use title and description")}</button>
                   <button type="button" className="linklike small" onClick={() => setSugg(null)}>{t("Descartar", "Dismiss")}</button>
                 </div>
               </div>
             )}
           </div>
         )}
+        <label>{t("Descripción de tu anuncio", "Your listing description")}
+          <textarea name="description" required minLength={30} maxLength={3000} rows={9} placeholder={aiEnabled ? t("Aquí aparecerá la descripción que te proponga el asistente. También puedes escribirla tú.", "The description proposed by the assistant will appear here. You can also write it yourself.") : t("Estado de la propiedad, servicios, distancia al centro, condiciones de renta o venta (depósito, contrato, mascotas)… The listing is published in Spanish; English readers see an automatic translation.", "Condition, utilities, distance to downtown, rental or sale terms (deposit, contract, pets)… The listing is published in Spanish; English readers see an automatic translation.")} />
+          <small className="muted">{t("Esto es lo que se publicará. Puedes editarla.", "This is what will be published. You can edit it.")}{!aiEnabled && <> <button type="button" className="linklike small" onClick={basicDraft}>{t("Armar un borrador con mis datos", "Build a draft from my data")}</button></>}</small>
+        </label>
       </div>
 
       <div data-step="2" hidden={step !== 2} className="stack">

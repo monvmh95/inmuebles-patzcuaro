@@ -17,6 +17,7 @@ import { localizePath } from "@/lib/i18n";
 import { alternatesFor } from "@/lib/alternates";
 import { translateText, localizeTitles } from "@/lib/ai";
 import { query } from "@/lib/db";
+import { featureLabel } from "@/lib/features";
 import { getBySlug, listProperties } from "@/lib/properties";
 import { breadcrumbJsonLd, JsonLd, propertyJsonLd, propertyTitle } from "@/lib/seo";
 import { safe } from "@/lib/safe";
@@ -31,7 +32,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const p = await safe(() => getBySlug(slug), null);
   if (!p) return { title: t("Propiedad no disponible", "Property not available"), robots: { index: false } };
   const tx = lang === "en" ? { title: (await translateText(p.title, "en", "title")).text, description: (await translateText(p.description, "en", "description")).text } : { title: p.title, description: p.description };
-  const desc = `${formatPrice(p.price, p.operation, lang)}. ${tx.description.replace(/\s+/g, " ").slice(0, 140)}…`;
+  const flat = tx.description.replace(/\s+/g, " ").trim();
+  const first = (flat.match(/^.{20,}?[.!?](?=\s|$)/)?.[0] ?? flat).slice(0, 155);
+  const desc = `${formatPrice(p.price, p.operation, lang)}. ${first}${first.length < flat.length && !/[.!?]$/.test(first) ? "…" : ""}`.slice(0, 200);
   return {
     title: `${tx.title} | ${propertyTitle(p, lang)}`,
     description: desc,
@@ -80,6 +83,14 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
           </div>
           <p className="muted">{propertyTitle(p, lang)}</p>
           <div className="prose">{tx.description}</div>
+          {(p.features ?? []).length > 0 && (
+            <>
+              <h2 className="h3" style={{ marginTop: 22 }}>{t("Características", "Features")}</h2>
+              <ul className="prop-feats">
+                {(p.features ?? []).map((k) => { const l = featureLabel(k, lang); return l ? <li key={k}>{l}</li> : null; })}
+              </ul>
+            </>
+          )}
           {lang === "en" && <p className="muted small">{machine ? "Automatic English translation of the listing written in Spanish by the owner or agent. Check details when you contact them." : "This listing was written in Spanish by the owner or agent. Automatic translation is not available for it right now."}</p>}
           {p.lake_view && <p><span className="verified" style={{ color: "var(--rebozo)", borderColor: "var(--rebozo)" }}>{t("Vista al lago", "Lake view")}</span></p>}
           {p.lat != null && p.lng != null && (

@@ -268,3 +268,15 @@ a.verified:hover { background: #eef6f3; color: var(--accent); }
 .lang-switch { font-size: .8rem; font-weight: 700; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; text-decoration: none !important; color: var(--ink) !important; background: var(--surface); }
 .lang-switch:hover { border-color: var(--brand); color: var(--brand) !important; }
 @media (max-width: 400px) { .logo { font-size: .84rem; gap: 4px; } .logo svg { width: 22px; height: 22px; } .header-row { gap: 6px; } .nav { gap: 5px; } .nav .btn { padding: 7px 9px; font-size: .78rem; } }
+
+/* Características con casillas */
+.feats { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--surface); }
+.feats legend { font-weight: 700; padding: 0 6px; }
+.feat-group + .feat-group { margin-top: 12px; }
+.feat-title { margin: 0 0 6px; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+.feat-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.form .feat { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; font-size: .9rem; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); cursor: pointer; min-height: 40px; }
+.form .feat input { width: auto; margin: 0; accent-color: var(--brand); }
+.form .feat:has(input:checked) { border-color: var(--brand); background: #fff; color: var(--brand-dark); font-weight: 650; }
+.prop-feats { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.prop-feats li { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: .88rem; }

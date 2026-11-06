@@ -6,6 +6,7 @@ import { clientIpHash } from "@/lib/request";
 import { newToken, normalizeMxPhone, randomId, slugify } from "@/lib/util";
 import { SITE_URL } from "@/lib/config";
 import { parseLand } from "@/lib/measures";
+import { FEATURE_KEYS, cleanFeatures } from "@/lib/features";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,7 @@ const schema = z.object({
   bathrooms: num(30),
   land_m2: num(1_000_000),
   land_dims: z.string().trim().max(30).optional(),
+  features: z.array(z.enum(FEATURE_KEYS)).max(30).optional(),
   built_m2: num(100_000),
   lat: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().finite().nullable()).optional(),
   lng: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().finite().nullable()).optional(),
@@ -80,11 +82,11 @@ export async function POST(req: Request) {
   const slug = `${slugify(d.title) || "propiedad"}-${randomId(3)}`;
   await query(
     `INSERT INTO properties (slug, token_hash, operation, type, title, description, price, colonia, colonia_slug,
-        bedrooms, bathrooms, land_m2, built_m2, owner_kind, whatsapp, email, photos, ip_hash, lat, lng, lake_view, land_dims)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19::float8,$20::float8,$21::boolean,$22)`,
+        bedrooms, bathrooms, land_m2, built_m2, owner_kind, whatsapp, email, photos, ip_hash, lat, lng, lake_view, land_dims, features)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19::float8,$20::float8,$21::boolean,$22,$23::jsonb)`,
     [
       slug, hash, d.operation, d.type, d.title, d.description, d.price, d.colonia, slugify(d.colonia) || "centro",
-      d.bedrooms, d.bathrooms, landM2, d.built_m2, d.owner_kind, phone, d.email || null, JSON.stringify(d.photos), ip, lat, lng, d.lake_view === true, landDims,
+      d.bedrooms, d.bathrooms, landM2, d.built_m2, d.owner_kind, phone, d.email || null, JSON.stringify(d.photos), ip, lat, lng, d.lake_view === true, landDims, JSON.stringify(cleanFeatures(d.features)),
     ],
   );
   return NextResponse.json({ ok: true, manageUrl: `${SITE_URL}/mi-anuncio/${token}`, manageToken: token });
