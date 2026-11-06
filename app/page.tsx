@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import PropertyCard from "@/components/PropertyCard";
+import SearchBar from "@/components/SearchBar";
+import { PortalesHero } from "@/components/Art";
 import Countdown from "@/components/Countdown";
 import { CITY, KING_ENABLED, OPERATIONS, STATE, TYPES, isOperation, typeFromSlug, type Operation, type PropType } from "@/lib/config";
 import { hasDb } from "@/lib/db";
@@ -52,30 +54,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
   return (
     <>
       <section className="hero">
-        <h1>Casas y terrenos en {CITY}, directo con el dueño</h1>
-        <p>Renta, venta y traspaso en {CITY}, {STATE}. Contacta por WhatsApp, sin comisiones del sitio.</p>
-        <form className="search" action="/" method="get" role="search">
-          <select name="op" defaultValue={op} aria-label="Operación">
-            <option value="">Renta o venta</option>
-            {Object.entries(OPERATIONS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-          </select>
-          <select name="type" defaultValue={type} aria-label="Tipo">
-            <option value="">Todo tipo</option>
-            {Object.entries(TYPES).map(([k, v]) => <option key={k} value={k}>{v.plural}</option>)}
-          </select>
-          <select name="colonia" defaultValue={colonia} aria-label="Colonia">
-            <option value="">Toda la ciudad</option>
-            {colonias.map((c) => <option key={c.colonia_slug} value={c.colonia_slug}>{c.colonia}</option>)}
-          </select>
-          <input name="max" type="number" min={0} inputMode="numeric" placeholder="Precio máx. $" defaultValue={max} aria-label="Precio máximo" />
-          <button className="btn">Buscar</button>
-        </form>
-        <div className="chips">
-          <Link className="chip" href="/renta/casas">Casas en renta</Link>
-          <Link className="chip" href="/venta/terrenos">Terrenos en venta</Link>
-          <Link className="chip" href="/renta/departamentos">Departamentos en renta</Link>
-          <Link className="chip" href="/renta/locales">Locales en renta</Link>
+        <div>
+          <span className="eyebrow">Pueblo Mágico · Michoacán</span>
+          <h1>Tu próximo hogar en <em>{CITY}</em>, directo con el dueño</h1>
+          <p className="hero-lede">Renta, venta y traspaso de casas, terrenos y locales. Contacta por WhatsApp, sin comisiones del sitio.</p>
+          <SearchBar op={op} type={type} colonia={colonia} max={max} colonias={colonias} />
+          <div className="chips">
+            <Link className="chip" href="/renta/casas">Casas en renta</Link>
+            <Link className="chip" href="/venta/terrenos">Terrenos en venta</Link>
+            <Link className="chip" href="/renta/departamentos">Departamentos en renta</Link>
+            <Link className="chip" href="/renta/locales">Locales en renta</Link>
+          </div>
         </div>
+        <div className="hero-art" aria-hidden="false"><div className="arch-frame"><PortalesHero /></div></div>
       </section>
 
       {!hasDb() && (
@@ -85,14 +76,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
       )}
 
       {king && !filtering && (
-        <section className="section" aria-labelledby="rey">
+        <section className="section" aria-labelledby="rey"><div className="king">
           <div className="king-head">
-            <span className="king-tag">Rey del día</span>
-            <h2 id="rey" style={{ margin: 0 }}>Propiedad destacada</h2>
-            <span className="muted small">Termina en <Countdown endsAt={new Date(king.ends_at).toISOString()} /></span>
+            <span className="king-tag">Destacada</span>
+            <h2 id="rey">Casa del día</h2>
+            <span className="small muted">Termina en <Countdown endsAt={new Date(king.ends_at).toISOString()} /></span>
           </div>
           <div className="grid"><PropertyCard p={king.property} featured /></div>
-        </section>
+        </div></section>
       )}
 
       <section className="section">

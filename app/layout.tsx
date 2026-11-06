@@ -3,6 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 import { CITY, SITE_NAME, SITE_URL, STATE } from "@/lib/config";
 import { JsonLd, websiteJsonLd } from "@/lib/seo";
+import { Logo } from "@/components/Art";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export const viewport: Viewport = { themeColor: "#9f3a24", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#9c3a22", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -25,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="site-header">
           <div className="wrap header-row">
             <Link href="/" className="logo">
-              <span className="logo-mark" aria-hidden>⌂</span> {SITE_NAME}
+              <Logo /> {SITE_NAME}
             </Link>
             <nav className="nav" aria-label="Principal">
               <Link href="/renta">Renta</Link>
@@ -35,8 +36,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </nav>
           </div>
         </header>
+        <div className="rebozo-bar" aria-hidden />
         <main className="wrap main">{children}</main>
         <footer className="site-footer">
+          <div className="roof-divider" aria-hidden />
           <div className="wrap footer-grid">
             <div>
               <strong>{SITE_NAME}</strong>
@@ -45,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="small">
               <Link href="/guias/como-evitar-fraudes-al-rentar">Cómo evitar fraudes al rentar</Link><br />
               <Link href="/guias/colonias">Colonias de {CITY}</Link><br />
+              <Link href="/verificacion">Qué es “Verificado”</Link><br />
               <Link href="/terminos">Términos</Link> · <Link href="/privacidad">Privacidad</Link>
             </div>
             <p className="muted small">

@@ -9,7 +9,7 @@ export async function getCurrentKing(): Promise<{ property: Property; ends_at: s
   const rows = await query<Property & { ends_at: string }>(
     `SELECT p.id, p.slug, p.operation, p.type, p.title, p.description, p.price, p.colonia, p.colonia_slug,
             p.bedrooms, p.bathrooms, p.land_m2, p.built_m2, p.owner_kind, p.whatsapp, p.photos, p.status,
-            p.views, p.wa_clicks, p.created_at, p.approved_at, p.confirmed_at, k.ends_at
+            p.views, p.wa_clicks, p.created_at, p.approved_at, p.confirmed_at, p.verified_at, k.ends_at
        FROM king_slots k JOIN properties p ON p.id = k.property_id
       WHERE k.starts_at <= now() AND k.ends_at > now() AND p.status = 'approved'
       ORDER BY k.starts_at DESC LIMIT 1`,

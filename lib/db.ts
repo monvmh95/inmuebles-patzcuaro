@@ -45,6 +45,7 @@ const SCHEMA = [
     approved_at   TIMESTAMPTZ,
     confirmed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
   )`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ`,
   `CREATE INDEX IF NOT EXISTS idx_properties_listing ON properties (status, operation, type, colonia_slug, approved_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_properties_ip ON properties (ip_hash, created_at)`,
   `CREATE TABLE IF NOT EXISTS reports (

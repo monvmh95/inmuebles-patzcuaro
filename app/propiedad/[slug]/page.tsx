@@ -6,12 +6,15 @@ import type { Metadata } from "next";
 import ReportButton from "@/components/ReportButton";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import PropertyCard from "@/components/PropertyCard";
-import { CITY, OPERATIONS, TYPES } from "@/lib/config";
+import Gallery from "@/components/Gallery";
+import ShareButtons from "@/components/ShareButtons";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { CITY, OPERATIONS, SITE_URL, TYPES } from "@/lib/config";
 import { query } from "@/lib/db";
 import { getBySlug, listProperties } from "@/lib/properties";
 import { breadcrumbJsonLd, JsonLd, propertyJsonLd, propertyTitle } from "@/lib/seo";
 import { safe } from "@/lib/safe";
-import { formatDate, formatPrice, isBot, whatsappUrl } from "@/lib/util";
+import { formatDate, formatPrice, isBot, pricePerM2, timeAgo, whatsappUrl } from "@/lib/util";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${p.title} | ${propertyTitle(p)}`,
     description: desc,
     alternates: { canonical: `/propiedad/${p.slug}` },
-    openGraph: { title: p.title, description: desc, type: "article", images: p.photos.slice(0, 1) },
+    openGraph: { title: p.title, description: desc, type: "article" },
   };
 }
 
@@ -42,6 +45,11 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
 
   return (
     <>
+      <style>{`.main{padding-bottom:110px}@media(min-width:900px){.main{padding-bottom:56px}}`}</style>
+      <div className="sticky-cta">
+        <span className="sticky-price">{formatPrice(p.price, p.operation)}</span>
+        <WhatsAppButton slug={p.slug} href={wa} />
+      </div>
       <nav className="crumbs" aria-label="Migas de pan">
         <Link href="/">Inicio</Link> › <Link href={`/${p.operation}`}>{OPERATIONS[p.operation].label}</Link> ›{" "}
         <Link href={`/${p.operation}/${typeSlug}`}>{TYPES[p.type].plural}</Link> ›{" "}
@@ -50,24 +58,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
 
       <div className="detail">
         <div>
-          <div className="gallery-main">
-            {p.photos[0] ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.photos[0]} alt={`${p.title} - foto principal`} width={1200} height={900} fetchPriority="high" />
-            ) : (
-              <div className="card-noimg" style={{ height: "100%" }}>Sin fotos</div>
-            )}
-          </div>
-          {p.photos.length > 1 && (
-            <div className="gallery-thumbs">
-              {p.photos.slice(1).map((u, i) => (
-                <a key={u} href={u} target="_blank" rel="noopener">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={u} alt={`${p.title} - foto ${i + 2}`} loading="lazy" width={300} height={225} />
-                </a>
-              ))}
-            </div>
-          )}
+          <Gallery photos={p.photos} title={p.title} label={propertyTitle(p)} />
 
           <h1 style={{ marginTop: 20 }}>{p.title}</h1>
           <p className="muted">{propertyTitle(p)}</p>
@@ -77,6 +68,11 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
         <aside className="aside">
           <div className="panel">
             <p className="price-big">{formatPrice(p.price, p.operation)}</p>
+            {pricePerM2(p) != null && <p className="price-sub">≈ {formatPrice(pricePerM2(p), "venta")} por m²</p>}
+            <div className="trust">
+              {p.verified_at && <div className="trust-line"><VerifiedBadge link /> <span className="muted">Revisado por el sitio el {formatDate(p.verified_at)}</span></div>}
+              <div className="trust-line"><span aria-hidden>🕒</span> Confirmado {timeAgo(p.confirmed_at)} por quien publica</div>
+            </div>
             <ul className="facts">
               <li><b>{TYPES[p.type].label}</b>Tipo</li>
               <li><b>{OPERATIONS[p.operation].label}</b>Operación</li>
@@ -92,6 +88,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
               <strong>Antes de pagar:</strong> visita la propiedad, confirma que quien te la muestra es el dueño o su representante y no hagas anticipos a desconocidos.{" "}
               <Link href="/guias/como-evitar-fraudes-al-rentar">Ver guía</Link>
             </div>
+            <div className="share"><ShareButtons url={`${SITE_URL}/propiedad/${p.slug}`} title={p.title} /></div>
             <p className="muted small" style={{ marginTop: 12 }}>Publicado el {formatDate(p.approved_at ?? p.created_at)}</p>
             <ReportButton slug={p.slug} />
           </div>

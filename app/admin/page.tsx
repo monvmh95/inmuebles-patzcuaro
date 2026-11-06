@@ -3,12 +3,13 @@ import { adminConfigured, isAdmin } from "@/lib/admin";
 import { hasDb, query } from "@/lib/db";
 import { KING_ENABLED, OPERATIONS, TYPES } from "@/lib/config";
 import { formatDate, formatPrice } from "@/lib/util";
-import { approve, archive, grantKing, login, logout, reject, resolveReport } from "./actions";
+import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Administración", robots: { index: false, follow: false } };
 
 type Row = {
+  verified_at?: string | null;
   id: number; slug: string; title: string; description: string; operation: keyof typeof OPERATIONS; type: keyof typeof TYPES;
   price: number | null; colonia: string; whatsapp: string; email: string | null; photos: string[]; status: string;
   views: number; wa_clicks: number; created_at: string; confirmed_at: string; owner_kind: string;
@@ -119,6 +120,11 @@ export default async function Admin() {
                 <td>{p.views}</td><td>{p.wa_clicks}</td>
                 <td>{formatDate(new Date(new Date(p.confirmed_at).getTime() + 90 * 86_400_000))}</td>
                 <td className="row">
+                  {p.verified_at ? (
+                    <form action={unverify}><input type="hidden" name="id" value={p.id} /><button className="btn btn-small btn-ghost" title="Quitar el sello">Quitar ✓</button></form>
+                  ) : (
+                    <form action={verify}><input type="hidden" name="id" value={p.id} /><button className="btn btn-small btn-ghost" title="Solo si ya cumpliste los criterios de /verificacion">Verificar ✓</button></form>
+                  )}
                   <form action={archive}><input type="hidden" name="id" value={p.id} /><button className="btn btn-small btn-ghost">Dar de baja</button></form>
                   <form action={grantKing}><input type="hidden" name="id" value={p.id} /><button className="btn btn-small btn-ghost" title="Prueba interna, sin cobro">Probar Rey</button></form>
                 </td>

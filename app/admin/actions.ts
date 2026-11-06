@@ -38,6 +38,16 @@ export async function reject(fd: FormData) {
   await query(`UPDATE properties SET status='rejected' WHERE id=$1`, [id(fd)]);
   refresh();
 }
+export async function verify(fd: FormData) {
+  await guard();
+  await query(`UPDATE properties SET verified_at=now() WHERE id=$1`, [id(fd)]);
+  refresh();
+}
+export async function unverify(fd: FormData) {
+  await guard();
+  await query(`UPDATE properties SET verified_at=NULL WHERE id=$1`, [id(fd)]);
+  refresh();
+}
 export async function archive(fd: FormData) {
   await guard();
   await query(`UPDATE properties SET status='archived' WHERE id=$1`, [id(fd)]);

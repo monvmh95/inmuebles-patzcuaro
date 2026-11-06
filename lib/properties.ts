@@ -27,10 +27,11 @@ export type Property = {
   created_at: string;
   approved_at: string | null;
   confirmed_at: string;
+  verified_at: string | null;
 };
 
 const PUBLIC_COLS = `id, slug, operation, type, title, description, price, colonia, colonia_slug, bedrooms, bathrooms,
-  land_m2, built_m2, owner_kind, whatsapp, photos, status, views, wa_clicks, created_at, approved_at, confirmed_at`;
+  land_m2, built_m2, owner_kind, whatsapp, photos, status, views, wa_clicks, created_at, approved_at, confirmed_at, verified_at`;
 
 export type Filters = {
   operation?: Operation;

@@ -35,15 +35,7 @@ export function whatsappUrl(phone10: string, text: string): string {
   return `https://wa.me/52${phone10}?text=${encodeURIComponent(text)}`;
 }
 
-export function formatPrice(price: number | null, operation: string): string {
-  if (price == null) return "Precio a tratar";
-  const n = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(price);
-  return operation === "renta" ? `${n} /mes` : n;
-}
-
-export function formatDate(d: Date | string): string {
-  return new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeZone: "America/Mexico_City" }).format(new Date(d));
-}
+export { formatPrice, formatDate, timeAgo, pricePerM2 } from "./format";
 
 const BOT_RE = /bot|crawl|spider|slurp|preview|facebookexternalhit|whatsapp|headless|lighthouse|monitor/i;
 export function isBot(userAgent: string | null): boolean {
