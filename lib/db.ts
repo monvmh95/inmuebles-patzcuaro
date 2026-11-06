@@ -50,6 +50,33 @@ const SCHEMA = [
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lake_view BOOLEAN NOT NULL DEFAULT false`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS land_dims TEXT`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ`,
+  `CREATE TABLE IF NOT EXISTS accounts (
+    email_norm    TEXT PRIMARY KEY,
+    email         TEXT NOT NULL,
+    whatsapp      TEXT,
+    owner_kind    TEXT,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_login_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`,
+  `CREATE TABLE IF NOT EXISTS email_codes (
+    id         BIGSERIAL PRIMARY KEY,
+    email_norm TEXT NOT NULL,
+    code_hash  TEXT NOT NULL,
+    ip_hash    TEXT,
+    attempts   INTEGER NOT NULL DEFAULT 0,
+    used       BOOLEAN NOT NULL DEFAULT false,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_email_codes_email ON email_codes (email_norm, created_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS sessions (
+    token_hash   TEXT PRIMARY KEY,
+    email_norm   TEXT NOT NULL,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_used_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at   TIMESTAMPTZ NOT NULL
+  )`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS email_norm TEXT`,
   `CREATE INDEX IF NOT EXISTS idx_properties_email_norm ON properties (email_norm)`,
   `CREATE TABLE IF NOT EXISTS publishers (

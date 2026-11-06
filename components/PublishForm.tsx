@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MAX_PHOTOS, OPERATIONS, TYPES, type Operation, type PropType } from "@/lib/config";
 import { opLabel, typeLabel, localizePath } from "@/lib/i18n";
 import { useLang } from "./LangProvider";
@@ -47,6 +47,52 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
     if (from == null || from === to) return;
     setPhotos((p) => { const a = [...p]; const [m] = a.splice(from, 1); a.splice(to, 0, m); return a; });
   }
+  // Cuenta: se confirma el correo UNA vez (código de 6 dígitos) y el dispositivo se recuerda.
+  type Acct = { enabled: boolean; email: string | null; whatsapp: string | null; owner_kind: string | null };
+  const [acct, setAcct] = useState<Acct | null>(null);
+  const [mailIn, setMailIn] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [codeIn, setCodeIn] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authMsg, setAuthMsg] = useState("");
+  const [cool, setCool] = useState(0);
+  useEffect(() => {
+    fetch("/api/cuenta/yo", { cache: "no-store" }).then((r) => r.json()).then(setAcct).catch(() => setAcct({ enabled: false, email: null, whatsapp: null, owner_kind: null }));
+  }, []);
+  useEffect(() => {
+    if (cool <= 0) return;
+    const id = setTimeout(() => setCool((c) => c - 1), 1000);
+    return () => clearTimeout(id);
+  }, [cool]);
+  async function sendCode() {
+    setAuthMsg("");
+    const el = formRef.current?.querySelector<HTMLInputElement>('input[name="email_new"]');
+    if (el && !el.checkValidity()) { el.reportValidity(); return; }
+    setAuthBusy(true);
+    try {
+      const res = await fetch("/api/cuenta/codigo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: mailIn }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || t("No pudimos enviar el código.", "We could not send the code."));
+      setCodeSent(true); setCodeIn(""); setCool(30);
+    } catch (e) { setAuthMsg(e instanceof Error ? e.message : t("Error al enviar el código.", "Error sending the code.")); }
+    finally { setAuthBusy(false); }
+  }
+  async function verifyCode(code: string) {
+    setAuthMsg(""); setAuthBusy(true);
+    try {
+      const res = await fetch("/api/cuenta/verificar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: mailIn, code }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || t("Código incorrecto.", "Wrong code."));
+      setAcct({ enabled: true, email: j.email, whatsapp: j.whatsapp, owner_kind: j.owner_kind }); setCodeSent(false); setCodeIn("");
+    } catch (e) { setAuthMsg(e instanceof Error ? e.message : t("Error al verificar.", "Verification error.")); setCodeIn(""); }
+    finally { setAuthBusy(false); }
+  }
+  async function notMe() {
+    await fetch("/api/cuenta/salir", { method: "POST" }).catch(() => {});
+    setAcct((a) => (a ? { ...a, email: null, whatsapp: null, owner_kind: null } : a)); setMailIn(""); setCodeSent(false);
+  }
+  const needsMail = Boolean(acct?.enabled && !acct.email);
+
   const [priceDigits, setPriceDigits] = useState("");
   const priceNum = priceDigits ? Number(priceDigits) : null;
   const priceWords = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toLocaleString(en ? "en-US" : "es-MX", { maximumFractionDigits: 2 })} ${t("millones de pesos", "million pesos")}` : n >= 1000 ? `${Math.round(n / 1000).toLocaleString(en ? "en-US" : "es-MX")} ${t("mil pesos", "thousand pesos")}` : `${n} ${t("pesos", "pesos")}`);
@@ -199,6 +245,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         return;
       }
     }
+    if (needsMail) { setError(t("Confirma tu correo con el código para poder publicar.", "Confirm your email with the code to publish.")); return; }
     setBusy(true);
     const fd = new FormData(e.currentTarget);
     const body = {
@@ -212,7 +259,10 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
     const res = await fetch("/api/propiedades", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const j = await res.json().catch(() => ({}));
     setBusy(false);
-    if (!res.ok) return setError(j.error || t("No se pudo publicar. Revisa los datos.", "Could not publish. Please check the data."));
+    if (!res.ok) {
+      if (res.status === 401) setAcct((a) => (a ? { ...a, email: null } : a));
+      return setError(j.error || t("No se pudo publicar. Revisa los datos.", "Could not publish. Please check the data."));
+    }
     setDone({ manageUrl: j.manageUrl });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -225,6 +275,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         <p><strong>{t("Guarda este enlace privado.", "Save this private link.")}</strong> {t("Con él puedes ver las visitas, confirmar que sigue disponible o darlo de baja. No lo compartas.", "With it you can see visits, confirm the listing is still available or take it down. Do not share it.")}</p>
         <p className="mono"><a href={done.manageUrl}>{done.manageUrl}</a></p>
         <button className="btn btn-small" onClick={() => navigator.clipboard?.writeText(done.manageUrl)}>{t("Copiar enlace", "Copy link")}</button>
+        {acct?.email && <p><a className="btn btn-small" href={localizePath(lang, "/mis-anuncios")}>{t("Ver todos mis anuncios", "See all my listings")}</a></p>}
         <p className="muted small" style={{ marginTop: 14 }}>
           {t("¿Quieres el sello", "Want the")} <strong>{t("Verificado", "Verified")}</strong>{t("? Cuando revisemos tu anuncio nos comunicaremos al número que publicaste.", " badge? When we review your listing we will contact the number you provided.")} <a href={localizePath(lang, "/verificacion")}>{t("Cómo funciona", "How it works")}</a>.
         </p>
@@ -399,17 +450,51 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
             <div style={{ maxWidth: 340 }}><PropertyCard p={{ ...preview, photos }} preview lang={lang} /></div>
           </div>
         )}
+        {acct?.enabled && (
+          acct.email ? (
+            <div className="acct-box">
+              <p style={{ margin: 0 }}>✓ {t("Publicas como", "Posting as")} <strong>{acct.email}</strong></p>
+              <button type="button" className="linklike small" onClick={notMe}>{t("No soy yo / usar otro correo", "Not me / use another email")}</button>
+              <input type="hidden" name="email" value={acct.email} />
+            </div>
+          ) : (
+            <div className="acct-box">
+              <label>{t("Tu correo (no se muestra)", "Your email (not shown)")}
+                <input name="email_new" type="email" maxLength={120} autoComplete="email" placeholder="tu@correo.com" value={mailIn} onChange={(e) => setMailIn(e.target.value)} disabled={codeSent} />
+                <small className="muted">{t("Solo esta vez: te mandamos un código para confirmar que es tuyo. Después este dispositivo te recuerda y publicar es de un toque.", "Just this once: we email you a code to confirm it is yours. After that this device remembers you and posting takes one tap.")}</small>
+              </label>
+              {!codeSent ? (
+                <button type="button" className="btn btn-small" onClick={sendCode} disabled={authBusy || !mailIn}>{authBusy ? t("Enviando…", "Sending…") : t("Enviarme el código", "Email me the code")}</button>
+              ) : (
+                <div className="stack">
+                  <label>{t("Código de 6 dígitos", "6-digit code")}
+                    <input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]*" maxLength={6} placeholder="••••••" value={codeIn} autoFocus
+                      onChange={(e) => { const v = e.target.value.replace(/\D/g, "").slice(0, 6); setCodeIn(v); if (v.length === 6) verifyCode(v); }} style={{ letterSpacing: 6, fontSize: "1.3rem", maxWidth: 200 }} />
+                    <small className="muted">{t("Revisa tu correo (y la carpeta de spam). Vence en 10 minutos.", "Check your inbox (and spam). It expires in 10 minutes.")}</small>
+                  </label>
+                  <div className="row">
+                    <button type="button" className="linklike small" onClick={sendCode} disabled={cool > 0 || authBusy}>{cool > 0 ? t(`Reenviar en ${cool} s`, `Resend in ${cool}s`) : t("Reenviar código", "Resend code")}</button>
+                    <button type="button" className="linklike small" onClick={() => { setCodeSent(false); setAuthMsg(""); }}>{t("Cambiar correo", "Change email")}</button>
+                  </div>
+                </div>
+              )}
+              {authMsg && <p className="error small" role="alert">{authMsg}</p>}
+            </div>
+          )
+        )}
         <div className="grid2">
           <label>{t("Tu WhatsApp (10 dígitos)", "Your WhatsApp (10 digits)")}
-            <input name="whatsapp" required inputMode="tel" placeholder="434 123 4567" />
+            <input key={`wa-${acct?.whatsapp ?? ""}`} name="whatsapp" required inputMode="tel" placeholder="434 123 4567" defaultValue={acct?.whatsapp ?? ""} />
           </label>
-          <label>{t("Tu correo (no se muestra)", "Your email (not shown)")}
-            <input name="email" type="email" required maxLength={120} autoComplete="email" placeholder="tu@correo.com" />
-            <small className="muted">{t("Lo usamos para confirmar tu anuncio y avisarte. No lo publicamos.", "We use it to confirm your listing and contact you. We never publish it.")}</small>
-          </label>
+          {acct && !acct.enabled && (
+            <label>{t("Tu correo (no se muestra)", "Your email (not shown)")}
+              <input name="email" type="email" required maxLength={120} autoComplete="email" placeholder="tu@correo.com" />
+              <small className="muted">{t("Lo usamos para confirmar tu anuncio y avisarte. No lo publicamos.", "We use it to confirm your listing and contact you. We never publish it.")}</small>
+            </label>
+          )}
         </div>
         <label>{t("Publicas como", "You are posting as")}
-          <select name="owner_kind" defaultValue="dueno">
+          <select key={`ok-${acct?.owner_kind ?? ""}`} name="owner_kind" defaultValue={acct?.owner_kind ?? "dueno"}>
             <option value="dueno">{t("Dueño directo", "Direct owner")}</option>
             <option value="agente">{t("Agente / inmobiliaria", "Agent / real-estate agency")}</option>
           </select>

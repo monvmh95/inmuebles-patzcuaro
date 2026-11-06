@@ -298,3 +298,14 @@ a.verified:hover { background: #eef6f3; color: var(--accent); }
 .gallery-thumbs button:hover { opacity: 1; }
 .gallery-thumbs button.on { opacity: 1; border-color: var(--brand); }
 .gallery-thumbs img { aspect-ratio: 4 / 3; height: auto; object-fit: cover; width: 100%; display: block; }
+
+.acct-box { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--surface); display: grid; gap: 10px; }
+
+/* Mis anuncios */
+.my-card { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 14px; display: grid; gap: 10px; }
+.my-head { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: center; }
+.my-head img, .my-noimg { width: 96px; height: 72px; object-fit: cover; border-radius: 8px; background: var(--line); display: grid; place-items: center; font-size: .75rem; color: var(--muted); }
+.my-status { display: inline-block; width: fit-content; font-size: .75rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+.my-approved { color: var(--accent); border-color: var(--accent); } .my-rejected { color: var(--danger); border-color: var(--danger); }
+.my-stats { grid-template-columns: repeat(2, 1fr); } .my-stats .stat b { font-size: 1.3rem; }
+.my-edit { border-top: 1px dashed var(--line); padding-top: 12px; }
