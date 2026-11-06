@@ -50,6 +50,8 @@ const SCHEMA = [
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS lake_view BOOLEAN NOT NULL DEFAULT false`,
   `ALTER TABLE properties ADD COLUMN IF NOT EXISTS land_dims TEXT`,
+  `ALTER TABLE properties ADD COLUMN IF NOT EXISTS email_norm TEXT`,
+  `CREATE INDEX IF NOT EXISTS idx_properties_email_norm ON properties (email_norm)`,
   `CREATE TABLE IF NOT EXISTS publishers (
     whatsapp      TEXT PRIMARY KEY,
     listing_limit INTEGER,

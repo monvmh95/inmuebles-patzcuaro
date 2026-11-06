@@ -108,7 +108,7 @@ export default async function Admin() {
       <section>
         <h2>Personas que publican ({people.length})</h2>
         <p className="muted small">
-          Se identifican por su WhatsApp. Límite gratuito por defecto: <strong>{FREE_LISTING_LIMIT}</strong> anuncios activos (por revisar + publicados); se cambia con la variable <code>FREE_LISTING_LIMIT</code>.
+          Se identifican por su WhatsApp o su correo: cambiar solo uno no evade el límite. Límite gratuito por defecto: <strong>{FREE_LISTING_LIMIT}</strong> anuncios activos (por revisar + publicados); se cambia con la variable <code>FREE_LISTING_LIMIT</code>.
           Aquí puedes darle a una persona un límite propio (por ejemplo, un agente que pagó un plan), bloquear un número o dejar una nota. Un límite vacío usa el predeterminado.
         </p>
         <table className="table">
@@ -116,7 +116,7 @@ export default async function Admin() {
           <tbody>
             {people.map((x) => (
               <tr key={x.whatsapp} style={x.blocked ? { opacity: 0.6 } : undefined}>
-                <td><a href={`https://wa.me/52${x.whatsapp}`} target="_blank" rel="noopener">{x.whatsapp}</a></td>
+                <td><a href={`https://wa.me/52${x.whatsapp}`} target="_blank" rel="noopener">{x.whatsapp}</a>{x.emails ? <><br /><span className="muted small">{x.emails}</span></> : null}</td>
                 <td><strong>{x.active}</strong> / {limitFor(x)}<br /><span className="muted small">{x.pending} por revisar · {x.approved} publicados</span></td>
                 <td>{x.total}</td>
                 <td className="small">{formatDate(x.last_at)}</td>

@@ -64,6 +64,15 @@ export async function savePublisher(fd: FormData) {
      ON CONFLICT (whatsapp) DO UPDATE SET listing_limit=$2, blocked=$3, note=$4, updated_at=now()`,
     [wa, limit, blocked, note],
   );
+  // El mismo ajuste vale para los correos que esa persona ha usado.
+  const mails = await query<{ e: string }>(`SELECT DISTINCT email_norm AS e FROM properties WHERE whatsapp = $1 AND email_norm IS NOT NULL`, [wa]);
+  for (const { e } of mails) {
+    await query(
+      `INSERT INTO publishers (whatsapp, listing_limit, blocked, note, updated_at) VALUES ($1,$2,$3,$4,now())
+       ON CONFLICT (whatsapp) DO UPDATE SET listing_limit=$2, blocked=$3, note=$4, updated_at=now()`,
+      [e, limit, blocked, note],
+    );
+  }
   refresh();
 }
 export async function reject(fd: FormData) {

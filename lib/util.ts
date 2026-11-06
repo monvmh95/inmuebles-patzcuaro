@@ -31,6 +31,15 @@ export function normalizeMxPhone(raw: string): string | null {
   return d.length === 10 ? d : null;
 }
 
+/** Correo normalizado para detectar la misma persona: minúsculas, sin +etiqueta y, en Gmail, sin puntos. */
+export function normalizeEmail(raw: string): string {
+  const [localRaw, domainRaw = ""] = raw.trim().toLowerCase().split("@");
+  const domain = domainRaw === "googlemail.com" ? "gmail.com" : domainRaw;
+  let local = localRaw.split("+")[0];
+  if (domain === "gmail.com") local = local.replace(/\./g, "");
+  return `${local}@${domain}`;
+}
+
 export function whatsappUrl(phone10: string, text: string): string {
   return `https://wa.me/52${phone10}?text=${encodeURIComponent(text)}`;
 }

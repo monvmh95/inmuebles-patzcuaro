@@ -3,11 +3,11 @@ import { z } from "zod";
 import { query } from "@/lib/db";
 import { MAX_PHOTOS, OPERATIONS, TYPES, inBounds, roundGeo } from "@/lib/config";
 import { clientIpHash } from "@/lib/request";
-import { newToken, normalizeMxPhone, randomId, slugify } from "@/lib/util";
+import { newToken, normalizeEmail, normalizeMxPhone, randomId, slugify } from "@/lib/util";
 import { SITE_URL } from "@/lib/config";
 import { parseLand } from "@/lib/measures";
 import { FEATURE_KEYS, cleanFeatures } from "@/lib/features";
-import { activeCount, getPublisher, limitFor } from "@/lib/publishers";
+import { checkPublisher } from "@/lib/publishers";
 
 export const runtime = "nodejs";
 
@@ -32,7 +32,7 @@ const schema = z.object({
   lake_view: z.boolean().optional(),
   owner_kind: z.enum(["dueno", "agente"]),
   whatsapp: z.string().trim().min(8).max(25),
-  email: z.string().trim().email().max(120).optional().or(z.literal("")),
+  email: z.string().trim().email("Escribe un correo válido (lo usamos para confirmar tu anuncio; no se muestra).").max(120),
   photos: z
     .array(z.string().url().max(300))
     .max(MAX_PHOTOS)
@@ -54,10 +54,10 @@ export async function POST(req: Request) {
   const phone = normalizeMxPhone(d.whatsapp);
   if (!phone) return NextResponse.json({ error: "El WhatsApp debe tener 10 dígitos (ej. 434 123 4567)." }, { status: 400 });
 
-  const pub = await getPublisher(phone);
-  if (pub?.blocked) return NextResponse.json({ error: "Este número no puede publicar por ahora. Si crees que es un error, escríbenos." }, { status: 403 });
-  const limit = limitFor(pub);
-  const mine = await activeCount(phone);
+  const emailNorm = normalizeEmail(d.email);
+  const chk = await checkPublisher(phone, emailNorm);
+  if (chk.blocked) return NextResponse.json({ error: "Esta persona no puede publicar por ahora. Si crees que es un error, escríbenos." }, { status: 403 });
+  const limit = chk.limit, mine = chk.active;
   if (mine >= limit) {
     const c = process.env.CONTACT_EMAIL;
     return NextResponse.json({ error: `Ya tienes ${mine} anuncios activos y el límite gratuito es ${limit}. Para publicar más, escríbenos${c ? ` a ${c}` : ""} o da de baja alguno que ya no esté disponible.` }, { status: 403 });
@@ -92,11 +92,11 @@ export async function POST(req: Request) {
   const slug = `${slugify(d.title) || "propiedad"}-${randomId(3)}`;
   await query(
     `INSERT INTO properties (slug, token_hash, operation, type, title, description, price, colonia, colonia_slug,
-        bedrooms, bathrooms, land_m2, built_m2, owner_kind, whatsapp, email, photos, ip_hash, lat, lng, lake_view, land_dims, features)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19::float8,$20::float8,$21::boolean,$22,$23::jsonb)`,
+        bedrooms, bathrooms, land_m2, built_m2, owner_kind, whatsapp, email, photos, ip_hash, lat, lng, lake_view, land_dims, features, email_norm)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19::float8,$20::float8,$21::boolean,$22,$23::jsonb,$24)`,
     [
       slug, hash, d.operation, d.type, d.title, d.description, d.price, d.colonia, slugify(d.colonia) || "centro",
-      d.bedrooms, d.bathrooms, landM2, d.built_m2, d.owner_kind, phone, d.email || null, JSON.stringify(d.photos), ip, lat, lng, d.lake_view === true, landDims, JSON.stringify(cleanFeatures(d.features)),
+      d.bedrooms, d.bathrooms, landM2, d.built_m2, d.owner_kind, phone, d.email, JSON.stringify(d.photos), ip, lat, lng, d.lake_view === true, landDims, JSON.stringify(cleanFeatures(d.features)), emailNorm,
     ],
   );
   return NextResponse.json({ ok: true, manageUrl: `${SITE_URL}/mi-anuncio/${token}`, manageToken: token });

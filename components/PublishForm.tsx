@@ -403,8 +403,9 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
           <label>{t("Tu WhatsApp (10 dígitos)", "Your WhatsApp (10 digits)")}
             <input name="whatsapp" required inputMode="tel" placeholder="434 123 4567" />
           </label>
-          <label>{t("Correo (opcional, no se muestra)", "Email (optional, not shown)")}
-            <input name="email" type="email" maxLength={120} />
+          <label>{t("Tu correo (no se muestra)", "Your email (not shown)")}
+            <input name="email" type="email" required maxLength={120} autoComplete="email" placeholder="tu@correo.com" />
+            <small className="muted">{t("Lo usamos para confirmar tu anuncio y avisarte. No lo publicamos.", "We use it to confirm your listing and contact you. We never publish it.")}</small>
           </label>
         </div>
         <label>{t("Publicas como", "You are posting as")}
