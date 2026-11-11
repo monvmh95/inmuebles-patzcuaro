@@ -60,7 +60,8 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
       `${h}, ${STATE}. ${list.length ? `${list.length} listings available.` : "List for free or check back for new listings."} Contact owners directly on WhatsApp.`,
     ),
     alternates: alternatesFor(lang, path),
-    robots: list.length ? { index: true, follow: true } : { index: false, follow: true },
+    // Las páginas principales (/venta, /renta, /hospedaje…) siempre se indexan; las combinaciones (tipo/colonia) vacías no, para evitar páginas sin contenido.
+    robots: list.length || (!p.type && !p.coloniaSlug) ? { index: true, follow: true } : { index: false, follow: true },
   };
 }
 
