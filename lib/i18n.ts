@@ -4,7 +4,7 @@ export type Lang = "es" | "en";
 
 const TOP: [string, string][] = [
   ["renta", "rent"], ["venta", "sale"], ["traspaso", "transfer"], ["hospedaje", "lodging"], ["propiedad", "property"], ["publicar", "publish"],
-  ["mapa", "map"], ["favoritos", "favorites"], ["verificacion", "verification"], ["guias", "guides"], ["colonias", "neighborhoods"],
+  ["mapa", "map"], ["favoritos", "favorites"], ["verificacion", "verification"], ["guias", "guides"], ["colonias", "neighborhoods"], ["eventos", "events"],
 ];
 const TYPES_: [string, string][] = [
   ["casas", "houses"], ["departamentos", "apartments"], ["terrenos", "land"], ["locales", "commercial"],
@@ -36,6 +36,7 @@ function mapPath(path: string, to: Lang): string {
   if (parts[1]) {
     if (OPS.has(esTop)) parts[1] = m.types.get(parts[1]) ?? parts[1];
     else if (esTop === "guias") parts[1] = m.guides.get(parts[1]) ?? parts[1];
+    else if (esTop === "eventos") parts[1] = to === "en" ? (parts[1] === "enviar" ? "submit" : parts[1]) : (parts[1] === "submit" ? "enviar" : parts[1]);
   }
   return "/" + parts.join("/");
 }

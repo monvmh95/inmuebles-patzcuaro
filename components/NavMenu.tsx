@@ -34,6 +34,7 @@ export default function NavMenu({ otherLang, signedIn }: { otherLang: string; si
             <Link href={h("/renta")}>{t("Renta", "Rent")}</Link>
             <Link href={h("/venta")}>{t("Venta", "Sale")}</Link>
             <Link href={h("/hospedaje")}>{t("Hospedaje", "Lodging")}</Link>
+            <Link href={h("/eventos")}>{t("Eventos", "Events")}</Link>
             <Link href={h("/mapa")}>{t("Mapa", "Map")}</Link>
             <Link href={h("/favoritos")}>♡ {t("Favoritos", "Favorites")}</Link>
             <Link href={h("/guias")}>{t("Guías", "Guides")}</Link>

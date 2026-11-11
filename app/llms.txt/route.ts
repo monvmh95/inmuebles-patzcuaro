@@ -17,6 +17,7 @@ export function GET() {
 - [Propiedades en renta](${SITE_URL}/renta): casas, departamentos, locales y cuartos en renta.
 - [Propiedades en venta](${SITE_URL}/venta): casas, terrenos y locales en venta.
 - [Hospedaje en ${CITY}](${SITE_URL}/hospedaje): hoteles, posadas, cabañas y casas por noche, con calendario de disponibilidad y contacto directo con el anfitrión.
+- [Eventos en ${CITY}](${SITE_URL}/eventos): agenda de festivales, ferias y tradiciones de ${CITY} y la región del lago (FERATUM, Festival del Café, Chocolate y Vino, Feria de la Virgen de la Salud, Noche de Muertos, mariposa monarca), con fechas, sede y enlace a la fuente oficial.
 - [Colonias de ${CITY}](${SITE_URL}/guias/colonias): zonas con anuncios disponibles.
 - [Cómo evitar fraudes al rentar](${SITE_URL}/guias/como-evitar-fraudes-al-rentar): recomendaciones prácticas.
 - [Guías](${SITE_URL}/guias): comprar terreno, rentar por temporada y vivir en ${CITY}.
@@ -27,6 +28,7 @@ export function GET() {
 ## Estructura de URLs
 - /renta/casas/centro, /venta/terrenos/<colonia>: listados por operación, tipo y colonia.
 - /propiedad/<slug>: ficha individual.
+- /eventos/<evento>: página de cada evento; los que se repiten cada año conservan la misma URL y se actualizan con cada edición.
 - /colonias/<colonia>: página de cada colonia con texto editorial y anuncios.
 
 ## English

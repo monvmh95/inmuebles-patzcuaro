@@ -49,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <Link href={h("/renta")} className="nav-sec">{t("Renta", "Rent")}</Link>
                 <Link href={h("/venta")} className="nav-sec">{t("Venta", "Sale")}</Link>
                 <Link href={h("/hospedaje")} className="nav-sec">{t("Hospedaje", "Lodging")}</Link>
+                <Link href={h("/eventos")} className="nav-sec">{t("Eventos", "Events")}</Link>
                 <Link href={h("/mapa")} className="nav-sec">{t("Mapa", "Map")}</Link>
                 <Link href="/mis-anuncios" className="nav-sec">{signedIn ? "● " : ""}{t("Mis anuncios", "My listings")}</Link>
                 <Link href={h("/favoritos")} className="nav-fav" aria-label={t("Mis favoritos", "My favorites")} title={t("Mis favoritos", "My favorites")}>♡<span className="nav-fav-t"> {t("Favoritos", "Favorites")}</span></Link>
@@ -69,6 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </div>
               <div className="small">
                 <Link href={h("/guias/como-evitar-fraudes-al-rentar")}>{t("Cómo evitar fraudes al rentar", "How to avoid rental scams")}</Link><br />
+                <Link href={h("/eventos")}>{t("Eventos en Pátzcuaro", "Events in Pátzcuaro")}</Link><br />
                 <Link href={h("/guias")}>{t("Guías", "Guides")}</Link><br />
                 <Link href={h("/guias/colonias")}>{t(`Colonias de ${CITY}`, `${CITY} neighborhoods`)}</Link><br />
                 <Link href={h("/verificacion")}>{t("Qué es “Verificado”", "What “Verified” means")}</Link><br />

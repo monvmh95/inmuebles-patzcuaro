@@ -405,3 +405,13 @@ html, body { overflow-x: clip; }
 .gallery-main { position: relative; }
 .map-reset { background: #fff; color: var(--ink); border: 2px solid rgba(0,0,0,.25); border-radius: 8px; padding: 8px 12px; font: 650 .8rem/1 inherit; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.2); min-height: 36px; }
 .map-reset:hover { background: #f4f4f4; }
+
+/* Eventos */
+.ev-card h3 { margin: 6px 0 4px; font-size: 1.2rem; } .ev-card h3 a { text-decoration: none; }
+.ev-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ev-cat { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted, #6b6b6b); font-weight: 600; }
+.ev-badge { font-size: .75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.ev-live { border-color: var(--accent); } .ev-bad { border-color: #b3261e; color: #b3261e; }
+.ev-when { margin: 0 0 6px; font-weight: 600; }
+.ev-facts { display: grid; gap: 10px; margin: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.ev-facts > div { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 8px; } .ev-facts dt { font-weight: 600; } .ev-facts dd { margin: 0; overflow-wrap: anywhere; }

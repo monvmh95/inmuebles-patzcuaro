@@ -6,6 +6,8 @@ import { listPublishers, limitFor } from "@/lib/publishers";
 import { formatDate, formatPrice } from "@/lib/util";
 import { saveColonia } from "./actions";
 import { listColoniaContent } from "@/lib/colonias";
+import { approveEvent, rejectEvent, setEventStatus } from "./actions";
+import { listPendingEvents, listApproved, type EventRow } from "@/lib/events";
 import { approve, archive, verify, unverify, grantKing, login, logout, reject, resolveReport, setPrice, savePublisher, handleSuggestion, deleteAllListings, openTestSession } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +46,8 @@ export default async function Admin({ searchParams }: { searchParams?: Promise<{
   }
 
   const suggestions = await query<{ id: number; kind: string; message: string; contact: string | null; created_at: string }>(`SELECT id, kind, message, contact, created_at FROM suggestions WHERE NOT handled ORDER BY id DESC LIMIT 40`).catch(() => []);
+  const pendingEvents = await listPendingEvents().catch(() => [] as EventRow[]);
+  const liveEvents = await listApproved().catch(() => [] as EventRow[]);
   const [pending, approved, reports, stats, slots, colContent, colList, people] = await Promise.all([
     query<Row>(`SELECT * FROM properties WHERE status='pending' ORDER BY id ASC LIMIT 50`),
     query<Row>(`SELECT * FROM properties WHERE status='approved' ORDER BY approved_at DESC NULLS LAST LIMIT 40`),
@@ -107,6 +111,49 @@ export default async function Admin({ searchParams }: { searchParams?: Promise<{
             </div>
           </div>
         ))}
+      </section>
+
+      <section id="eventos">
+        <h2>Eventos por revisar ({pendingEvents.length})</h2>
+        {pendingEvents.length === 0 && <p className="muted">Ningún evento pendiente.</p>}
+        {pendingEvents.map((e) => (
+          <div className="admin-item" key={e.id}>
+            <div className="stack">
+              <strong>{e.title}</strong>
+              <div className="small muted">{e.category} · {e.city} · {e.venue} · {e.starts_on}{e.ends_on !== e.starts_on ? ` → ${e.ends_on}` : ""}{e.time_text ? ` · ${e.time_text}` : ""}{e.price_text ? ` · ${e.price_text}` : ""}</div>
+              <p className="small" style={{ whiteSpace: "pre-line", margin: 0 }}>{e.description}</p>
+              <div className="small">{e.source_url ? <a href={e.source_url} target="_blank" rel="noopener nofollow">{e.source_name || e.source_url}</a> : <span className="muted">Sin enlace de fuente</span>}{e.organizer ? ` · Organiza: ${e.organizer}` : ""}{e.contact ? ` · Contacto: ${e.contact}` : ""}</div>
+              <div className="row">
+                <form action={approveEvent}><input type="hidden" name="id" value={e.id} /><button className="btn btn-small">Aprobar</button></form>
+                <form action={rejectEvent}><input type="hidden" name="id" value={e.id} /><button className="btn btn-small btn-ghost">Rechazar</button></form>
+              </div>
+            </div>
+          </div>
+        ))}
+        <details style={{ marginTop: 10 }}>
+          <summary>Eventos publicados ({liveEvents.length}) · cambiar estado o rechazar</summary>
+          <table className="table">
+            <thead><tr><th>Evento</th><th>Fechas</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              {liveEvents.map((e) => (
+                <tr key={e.id}>
+                  <td data-label="Evento"><a href={`/eventos/${e.series}`} target="_blank" rel="noopener">{e.title}</a></td>
+                  <td className="small" data-label="Fechas">{e.starts_on} → {e.ends_on}</td>
+                  <td data-label="Estado">
+                    <form action={setEventStatus} className="row" style={{ gap: 6 }}>
+                      <input type="hidden" name="id" value={e.id} />
+                      <select name="event_status" defaultValue={e.event_status} aria-label="Estado del evento" style={{ padding: "6px 8px" }}>
+                        <option value="scheduled">Programado</option><option value="postponed">Pospuesto</option><option value="cancelled">Cancelado</option>
+                      </select>
+                      <button className="btn btn-small btn-ghost">Guardar</button>
+                    </form>
+                  </td>
+                  <td data-label="Quitar"><form action={rejectEvent}><input type="hidden" name="id" value={e.id} /><button className="btn btn-small btn-ghost">Despublicar</button></form></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
       </section>
 
       <section>

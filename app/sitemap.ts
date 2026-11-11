@@ -4,6 +4,7 @@ import { hasDb } from "@/lib/db";
 import { listAllSlugs, listLandingCombos } from "@/lib/properties";
 import { listColoniaSlugsWithContent } from "@/lib/colonias";
 import { localizePath } from "@/lib/i18n";
+import { listSeriesForSitemap } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ async function build(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/guias/comprar-terreno-en-patzcuaro`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}/guias/rentar-por-temporada-en-patzcuaro`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}/guias/vivir-en-patzcuaro`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${SITE_URL}/eventos`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/mapa`, changeFrequency: "daily", priority: 0.6 },
     { url: `${SITE_URL}/verificacion`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/guias/colonias`, changeFrequency: "weekly", priority: 0.7 },
@@ -48,6 +50,8 @@ async function build(): Promise<MetadataRoute.Sitemap> {
         if (!seen.has(path)) { seen.add(path); out.push({ url: `${SITE_URL}${path}`, lastModified: now, changeFrequency: "daily", priority: 0.7 }); }
       }
     }
+    const evs = await listSeriesForSitemap().catch(() => []);
+    for (const e of evs) out.push({ url: `${SITE_URL}/eventos/${e.series}`, lastModified: new Date(e.updated_at), changeFrequency: "weekly", priority: 0.7 });
     const cols = await listColoniaSlugsWithContent().catch(() => []);
     for (const c of cols) out.push({ url: `${SITE_URL}/colonias/${c.colonia_slug}`, lastModified: new Date(c.updated_at), changeFrequency: "monthly", priority: 0.7 });
     for (const s of slugs) out.push({ url: `${SITE_URL}/propiedad/${s.slug}`, lastModified: new Date(s.updated), changeFrequency: "weekly", priority: 0.6 });

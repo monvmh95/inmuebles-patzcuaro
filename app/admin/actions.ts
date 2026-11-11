@@ -156,3 +156,22 @@ export async function openTestSession(fd: FormData) {
   console.warn("admin: sesión de prueba abierta para", phone.slice(0, 3) + "****" + phone.slice(-2));
   redirect("/publicar");
 }
+
+export async function approveEvent(fd: FormData) {
+  await guard();
+  await query(`UPDATE events SET status='approved', approved_at=now(), updated_at=now() WHERE id=$1`, [id(fd)]);
+  refresh();
+}
+export async function rejectEvent(fd: FormData) {
+  await guard();
+  // Se conserva la fila como "rejected" para que el evento no se vuelva a cargar solo.
+  await query(`UPDATE events SET status='rejected', updated_at=now() WHERE id=$1`, [id(fd)]);
+  refresh();
+}
+export async function setEventStatus(fd: FormData) {
+  await guard();
+  const st = String(fd.get("event_status"));
+  if (!["scheduled", "cancelled", "postponed"].includes(st)) throw new Error("estado inválido");
+  await query(`UPDATE events SET event_status=$2, updated_at=now() WHERE id=$1`, [id(fd), st]);
+  refresh();
+}

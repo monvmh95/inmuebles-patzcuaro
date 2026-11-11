@@ -2,6 +2,7 @@ import { CITY, OPERATIONS, SITE_NAME, SITE_URL, STATE, TYPES } from "./config";
 import type { Property } from "./properties";
 import { localizePath, opPlural, typeLabel, type Lang } from "./i18n";
 import { featureLabel } from "./features";
+import { evDescription, evTitle, type EventRow } from "./events";
 
 export function propertyTitle(p: Pick<Property, "type" | "operation" | "colonia">, lang: Lang = "es") {
   if (p.operation === "hospedaje") return lang === "en" ? `${typeLabel(lang, p.type)} to stay in ${p.colonia}, ${CITY}` : `${TYPES[p.type].label} para hospedarse en ${p.colonia}, ${CITY}`;
@@ -107,4 +108,37 @@ export function websiteJsonLd(lang: Lang = "es") {
 
 export function JsonLd({ data }: { data: unknown }) {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;
+}
+
+export function eventJsonLd(e: EventRow, lang: Lang = "es") {
+  const url = `${SITE_URL}${localizePath(lang, `/eventos/${e.series}`)}`;
+  const status = e.event_status === "cancelled" ? "EventCancelled" : e.event_status === "postponed" ? "EventPostponed" : "EventScheduled";
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: evTitle(e, lang),
+    description: evDescription(e, lang).replace(/\s+/g, " ").slice(0, 500),
+    url,
+    startDate: e.starts_on,
+    endDate: e.ends_on,
+    eventStatus: `https://schema.org/${status}`,
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    inLanguage: lang === "en" ? "en" : "es-MX",
+    location: {
+      "@type": "Place",
+      name: e.venue || e.city,
+      address: { "@type": "PostalAddress", ...(e.address ? { streetAddress: e.address } : {}), addressLocality: e.city, addressRegion: STATE, addressCountry: "MX" },
+    },
+    ...(e.organizer ? { organizer: { "@type": "Organization", name: e.organizer } } : {}),
+    ...(e.is_free === true ? { isAccessibleForFree: true } : {}),
+  };
+}
+
+export function eventsListJsonLd(name: string, items: EventRow[], lang: Lang = "es") {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    itemListElement: items.map((e, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE_URL}${localizePath(lang, `/eventos/${e.series}`)}`, name: evTitle(e, lang) })),
+  };
 }
