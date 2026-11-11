@@ -5,7 +5,7 @@ export const dynamic = "force-static";
 export function GET() {
   const body = `# ${SITE_NAME}
 
-> Tablón gratuito de propiedades en renta, venta y traspaso, y de hospedaje por noche (hoteles, posadas, cabañas, hostales, glamping, casas y cuartos), en ${CITY}, ${STATE}, México. Los dueños y agentes publican sin costo y los interesados los contactan directo por WhatsApp. El sitio no es inmobiliaria ni intermedia operaciones.
+> Tablón gratuito de propiedades en renta, venta y traspaso, y de hospedaje por noche (hoteles, posadas, cabañas, hostales, glamping, casas y cuartos), en ${CITY}, ${STATE}, México. Propietarios, inmobiliarias y asesores publican sin costo y los interesados los contactan directo por WhatsApp. El sitio no es inmobiliaria ni intermedia operaciones.
 
 ## Qué encontrarás
 - Tipos de inmueble: ${Object.values(TYPES).map((t) => t.plural.toLowerCase()).join(", ")}.

@@ -568,7 +568,7 @@ export default function PublishForm({ photosEnabled, aiEnabled = false }: { phot
         <label>{t("Publicas como", "You are posting as")}
           <select key={`ok-${acct?.owner_kind ?? ""}`} name="owner_kind" defaultValue={acct?.owner_kind ?? "dueno"}>
             <option value="dueno">{t("Dueño directo", "Direct owner")}</option>
-            <option value="agente">{t("Agente / inmobiliaria", "Agent / real-estate agency")}</option>
+            <option value="agente">{t("Inmobiliaria / asesor", "Real-estate agency / advisor")}</option>
           </select>
         </label>
         <input name="website" tabIndex={-1} autoComplete="off" className="hp" aria-hidden="true" />

@@ -27,7 +27,7 @@ const C = {
       ],
       [
         "Confirma que quien te atiende puede rentar o vender",
-        "Pide una identificación oficial y, si es venta, documentos de propiedad (escritura) y que el nombre coincida. Si es un agente o representante, pide la carta o poder que lo autoriza."
+        "Pide una identificación oficial y, si es venta, documentos de propiedad (escritura) y que el nombre coincida. Si te atiende un representante, pide el documento que lo autoriza (carta poder o contrato de administración)."
       ],
       [
         "Busca las fotos en otros sitios",
@@ -57,7 +57,7 @@ const C = {
       ],
       [
         "Confirm the person can rent or sell it",
-        "Ask for an official ID and, for a sale, ownership documents (the deed) with a matching name. If it is an agent or representative, ask for the letter or power of attorney that authorizes them."
+        "Ask for an official ID and, for a sale, ownership documents (the deed) with a matching name. If a representative is handling it, ask for the document that authorizes them (letter of authority or management contract)."
       ],
       [
         "Search for the photos elsewhere",

@@ -101,7 +101,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
               <div className="prose">{p.house_rules}</div>
             </>
           )}
-          {lang === "en" && <p className="muted small">{machine ? "Automatic English translation of the listing written in Spanish by the owner or agent. Check details when you contact them." : "This listing was written in Spanish by the owner or agent. Automatic translation is not available for it right now."}</p>}
+          {lang === "en" && <p className="muted small">{machine ? "Automatic English translation of the listing written in Spanish by whoever posted it. Check details when you contact them." : "This listing was written in Spanish by the owner or agent. Automatic translation is not available for it right now."}</p>}
           {p.lake_view && <p><span className="verified" style={{ color: "var(--rebozo)", borderColor: "var(--rebozo)" }}>{t("Vista al lago", "Lake view")}</span></p>}
           {p.lat != null && p.lng != null && (
             <section aria-label={t("Zona aproximada", "Approximate area")}>
@@ -133,7 +133,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
               {p.built_m2 != null && <li><b>{p.built_m2} m²</b>{t("Construcción", "Built area")}</li>}
               {p.land_m2 != null && <li><b>{p.land_m2} m²</b>{t("Terreno", "Lot size")}{p.land_dims ? <small> ({p.land_dims} m)</small> : null}</li>}
               <li><b>{p.colonia}</b>{t("Zona", "Area")}</li>
-              <li><b>{p.owner_kind === "dueno" ? t("Dueño directo", "Direct owner") : t("Agente", "Agent")}</b>{t("Publica", "Posted by")}</li>
+              <li><b>{p.owner_kind === "dueno" ? t("Dueño directo", "Direct owner") : t("Inmobiliaria / asesor", "Real-estate professional")}</b>{t("Publica", "Posted by")}</li>
             </ul>
             {lodging
               ? <LodgingBooking slug={p.slug} title={tx.title} phone={p.whatsapp} blocked={blocked} maxGuests={p.max_guests ?? null} minNights={p.min_nights ?? null} lang={lang} />

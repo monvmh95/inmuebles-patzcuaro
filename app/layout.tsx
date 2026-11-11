@@ -66,7 +66,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <div className="wrap footer-grid">
               <div>
                 <strong>{SITE_NAME}</strong>
-                <p className="muted small">{t(`Tablón de propiedades de ${CITY}, ${STATE}. Conecta directo con dueños y agentes.`, `Property board for ${CITY}, ${STATE}, Mexico. Connect directly with owners and agents.`)}</p>
+                <p className="muted small">{t(`Tablón de propiedades de ${CITY}, ${STATE}. Conecta directo con quien publica.`, `Property board for ${CITY}, ${STATE}, Mexico. Connect directly with whoever lists.`)}</p>
               </div>
               <div className="small">
                 <Link href={h("/guias/como-evitar-fraudes-al-rentar")}>{t("Cómo evitar fraudes al rentar", "How to avoid rental scams")}</Link><br />
@@ -80,8 +80,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </div>
               <p className="muted small">
                 {t(
-                  `${SITE_NAME} no es una inmobiliaria ni intermedia operaciones. No verificamos a las partes: nunca pagues anticipos sin ver la propiedad y comprobar a quién pagas.`,
-                  `${SITE_NAME} is not a real-estate agency and does not intermediate transactions. We do not vouch for the parties: never pay deposits without seeing the property and confirming who you are paying.`,
+                  `${SITE_NAME} no es una inmobiliaria ni intermedia operaciones. Antes de pagar un anticipo, visita la propiedad y comprueba a quién le pagas.`,
+                  `${SITE_NAME} is not a real-estate agency and does not intermediate transactions. Before paying a deposit, visit the property and confirm who you are paying.`,
                 )}
               </p>
             </div>
