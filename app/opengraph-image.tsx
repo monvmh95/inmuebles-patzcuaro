@@ -11,7 +11,7 @@ export default function Image() {
         <div style={{ display: "flex", fontSize: 34, color: "#9c3a22", fontWeight: 700 }}>Pueblo Mágico · Michoacán</div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 92, color: "#2b1f19", fontWeight: 800, lineHeight: 1.05 }}>Inmuebles Pátzcuaro</div>
-          <div style={{ fontSize: 40, color: "#655548", marginTop: 20 }}>Casas, terrenos y locales en renta y venta, directo con el dueño</div>
+          <div style={{ fontSize: 40, color: "#655548", marginTop: 20 }}>Casas, terrenos y locales en renta y venta, con trato directo por WhatsApp</div>
         </div>
       </div>
     ),

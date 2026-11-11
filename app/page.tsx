@@ -81,7 +81,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
       <section className="hero">
         <div>
           <span className="eyebrow">{t("Pueblo Mágico · Michoacán", "Pueblo Mágico · Michoacán, Mexico")}</span>
-          <h1>{t("Tu próximo hogar en ", "Your next home in ")}<em>{CITY}</em>{t(", directo con el dueño", ", direct from the owner")}</h1>
+          <h1>{t("Tu próximo hogar en ", "Your next home in ")}<em>{CITY}</em>{t(", trato directo", ", direct contact")}</h1>
           <p className="hero-lede">{t("Renta, venta, traspaso y hospedaje en Pátzcuaro. Contacta directo por WhatsApp, sin comisiones del sitio.", "Rentals, sales, business transfers and lodging in Pátzcuaro. Contact owners and hosts directly on WhatsApp, no site commission.")}</p>
           <SearchBar op={op} type={type} colonia={colonia} max={max} min={min} lake={lake} colonias={colonias} />
           <div className="chips">
